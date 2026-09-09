@@ -403,6 +403,31 @@ skip — apply the Error Handling section's escalation rule (tell the user;
 don't fabricate a finding or quietly treat the round as if no codebase were
 configured).
 
+A readable, existing codebase path that returns zero results for an obvious
+search (the field name from the UI, the class name you'd expect) is not by
+itself evidence the code doesn't exist — a recent refactor can rename
+fields/classes and move logic across files without changing what the UI
+does. Include this in Source-Verifier's dispatch prompt for both input sets
+below: "If your first search (the exact field/class name) returns nothing,
+don't conclude 'not implemented' from that alone — broaden the search
+before reporting a negative result: try the business-logic term itself
+(e.g. 'coverage ratio', 'collateral'), the API endpoint path or a fragment
+of it, the config/settings key name Traceability observed, and a directory
+listing of the module area the endpoint or screen name suggests. Only report
+'not found in code' as a finding once you've tried more than the one obvious
+pattern and state which search strategies you actually tried — a bare 'not
+found' with no record of what was searched is not a usable finding." A
+Source-Verifier report that claims "not found" without naming the search
+strategies attempted doesn't satisfy this stage's instructions — per the
+Error Handling section's subagent-retry rule, dispatch one fresh retry with
+this instruction restated before accepting the negative result and passing
+it on to Reporting or Defect-Triage. This is a distinct case from round 5's
+path-inaccessible escalation (below): here the path is fine and readable,
+the search was just insufficient — no need to involve the user unless a
+genuinely thorough search (multiple strategies, stated) still comes up
+empty, in which case report it plainly as "not located in code despite
+searching for X, Y, Z" rather than a flat "not found."
+
 A `DATA-LINEAGE.md` row that a prior round already verified as "source code
 (file:line)" and that Traceability reconfirmed this round with no change to
 the claimed source doesn't need Source-Verifier to redo the same code check
