@@ -589,6 +589,30 @@ to authorize. Dispatch one fresh `Agent` tool call. The prompt must include:
   found, with concrete evidence references (file/screenshot names, not just
   "confirmed"). State the current, correct picture as plain fact.
 
+If the user disputes a `DEFECT-LOG.md` entry's Classification after this
+report has already been compiled and presented (e.g. Defect-Triage called
+something `ExpectedBehaviour` and the user, with business-rule knowledge
+Defect-Triage had no access to, says it's really `ApplicationDefect`), the
+user's confirmed correction is authoritative — the same as the Stage 1 rule
+that a user's confirmed resolution of a business-rule question is
+authoritative — and no re-dispatch of Defect-Triage is needed to "re-derive"
+what the human already knows. Edit the existing Bug Report entry's
+Classification (and Suggested severity, if it also changes) in place; the
+"append, never overwrite" rule exists to keep distinct defects from being
+lost, not to prevent fixing a wrong field value on an entry that still
+describes the same underlying defect. If the already-compiled
+`TEST-EXECUTION-REPORT-<round-id>.md` for that round references the old
+classification, patch that reference too so the two files don't disagree —
+don't regenerate the whole report, and don't add correction narration into
+either file. Append a new `AUDIT-LOG.md` entry stating the corrected
+classification as the current, correct fact (this is exactly the "a prior
+finding turns out to be wrong" case the global instructions already define
+for this log) — the "why it changed" story belongs only there. The row's
+Test Plan Status is untouched by this: Classification and Status are
+independent facts about the same row (Status reflects Verifier's confirmed
+functional observation, which didn't change) — a Classification correction
+never implies revisiting Pass/Fail/Blocked.
+
 ## Templates
 
 ### Test Plan (drafted at Stage 3, confirmed at Stage 4)
