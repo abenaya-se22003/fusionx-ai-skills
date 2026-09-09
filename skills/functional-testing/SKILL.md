@@ -96,6 +96,23 @@ field as the plain fact of what was given, e.g. "Ad hoc verbal request —
 no ticket/spec: 'test the Savings module thoroughly'" — never leave it
 blank or invent a ticket number that doesn't exist.
 
+If multiple source documents are given or discovered (e.g. a ticket that
+links to a design/spec doc) and they disagree on the actual business rule
+to be tested (e.g. one says a 30-day minimum, the other says 45), that is
+unresolved ambiguity the same as the no-source case above — escalate it to
+the user for a single confirmed resolution before drafting the plan at
+Stage 3. Don't average the values, guess which document is authoritative,
+or write more than one candidate into the Test Plan's Expected column.
+Record what was decided as the plain fact in the Requirement/source field,
+e.g. "Ticket specifies 30 days, linked design doc specifies 45; user
+confirmed 45 is authoritative." This same escalate-before-finalizing rule
+applies if Discovery later observes a live configured value that agrees
+with neither original source (e.g. the config screen actually shows 60) —
+that is a new discrepancy to put back to the user the same way (per the
+Error Handling section's escalation rule) before the plan's Expected column
+is finalized, not a reason to silently substitute whichever value was found
+live.
+
 If the source names a **specific change** (a ticket describing one new
 field, one modified validation rule, etc.), scope Discovery's first pass to
 exactly that change and its immediate dependents — the field's own
