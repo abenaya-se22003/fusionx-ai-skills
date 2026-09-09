@@ -276,12 +276,22 @@ them.
   diverge the next time someone changes the setting. Report file/line
   references. If the code contradicts the UI-observed behavior, say so
   explicitly — that is a finding, not a detail to smooth over."
-- Every Verifier-REJECTED row — prompt: "Given this failing case (what was
-  expected, what was actually observed), find the code path responsible
-  and identify the precise cause — not just 'it fails' but the actual
-  faulty condition, missing check, or incorrect value in the code. Report
-  file/line references. If you cannot locate the responsible code, say so
-  plainly rather than guessing."
+- Every Verifier-REJECTED row — include the test plan row (Scenario,
+  Preconditions, Steps, Expected), Verifier's own evidence for the
+  rejection, and the relevant slice of the network-capture log so
+  Source-Verifier has the actual test context (what was tested, with what
+  data, and what the app actually returned), not just a bare pass/fail
+  claim. Prompt: "Given this failing case (what was expected, what was
+  actually observed), find the code path responsible and identify the
+  precise cause — not just 'it fails' but the actual faulty condition,
+  missing check, or incorrect value in the code. Report file/line
+  references. If you cannot locate the responsible code, say so plainly
+  rather than guessing." Source-Verifier does static analysis only — it has
+  no browser access and cannot retry the scenario live; that's
+  Defect-Triage's job in stage 9. If the same field also has a
+  `DATA-LINEAGE.md` row in scope this round, one combined dispatch covering
+  both questions (lineage confirmation and failure root-cause) is fine —
+  no need for two redundant dispatches against the same code area.
 
 Source-Verifier's output feeds into stage 9 (Defect-Triage, for rejected
 rows) and stage 10 (Reporting, for `DATA-LINEAGE.md`'s "Verification
@@ -293,26 +303,44 @@ observation" wherever Source-Verifier ran).
 Only if Verifier returned any REJECTED or BLOCKED row, or an unconfirmed
 lineage gap. Dispatch one fresh `Agent` tool call. The prompt must include:
 
-- Every REJECTED/BLOCKED row and lineage gap, with Verifier's evidence.
+- Every REJECTED/BLOCKED row and lineage gap, with Verifier's evidence and
+  the relevant slice of the network-capture log (Defect-Triage needs the
+  actual request/response, not just Verifier's narrative, to root-cause
+  before treating anything as reproducible).
 - Source-Verifier's file/line root-cause findings for that row, if stage 8
   ran and produced one — include it verbatim so Defect-Triage doesn't have
-  to re-derive what's already been found.
+  to re-derive what's already been found; Defect-Triage's job on top of it
+  is to confirm reproducibility and write it up, not repeat the code
+  investigation.
 - This instruction: "Before treating anything as a reproducible defect,
-  retry it with at least one different input combination or a fresh
-  session/login. Root-cause it using the actual network request/response
-  and, if provided, the Source-Verifier finding — not just what the UI
-  shows. Classify each confirmed defect using exactly one of:
-  ApplicationDefect, SuspectedDefect, AutomationIssue, EnvironmentIssue,
+  retry it with at least one different input combination (e.g. a different
+  record or product than the one Verifier used — the point is to rule out
+  a record-specific quirk, not to repeat the identical case) or a fresh
+  session/login. Retry once; if you still can't reproduce it after that one
+  retry, don't keep retrying indefinitely — record the attempt count and
+  outcome in 'Reproducibility' as-is (e.g. 'reproduced on 1 of 2 attempts')
+  and classify accordingly (a failure that won't reproduce on different
+  data may be TestDataIssue or EnvironmentIssue rather than
+  ApplicationDefect). Root-cause it using the actual network
+  request/response and, if provided, the Source-Verifier finding — not
+  just what the UI shows. Classify each confirmed defect using exactly one
+  of: ApplicationDefect, SuspectedDefect, AutomationIssue, EnvironmentIssue,
   TestDataIssue, ExpectedBehaviour, NeedsBusinessReview — if it's genuinely
   unclear whether an observed behavior is a defect or intended design, that
-  uncertainty is itself what NeedsBusinessReview is for; don't guess and
-  don't stop to ask the user mid-triage. Write one Bug Report entry (see
-  template below) per confirmed defect into `DEFECT-LOG.md` at the project
-  root, appending — never overwrite prior entries. Fill every template
-  field yourself from what you directly observed or retried —
-  'Reproducibility' from your own retry results, 'Suggested severity' from
-  the business impact of the observed failure — don't leave fields blank
-  for the main thread to backfill later."
+  uncertainty is itself what NeedsBusinessReview is for; don't guess, and
+  don't stop to ask the user to make this classification call for you (that
+  is a routine judgment this stage is trusted to make; it is not the same
+  as being genuinely blocked, which the Error Handling section's escalation
+  rule still covers — e.g. if you can't access a screen at all). Judge
+  'Suggested severity' as Critical/High/Medium/Low by business or
+  data-integrity impact — a wrong monetary or regulatory calculation is at
+  least High. Write one Bug Report entry (see template below) per confirmed
+  defect into `DEFECT-LOG.md` at the project root, appending — never
+  overwrite prior entries. Fill every template field yourself from what you
+  directly observed or retried — 'Reproducibility' from your own retry
+  results, 'Suggested severity' from the business impact of the observed
+  failure — don't leave fields blank for the main thread to backfill
+  later."
 
 ### 10. Reporting (main thread)
 
@@ -320,10 +348,14 @@ lineage gap. Dispatch one fresh `Agent` tool call. The prompt must include:
   (not in this skill repo) using the Run Summary template below — the
   clean, user-facing deliverable. No process narration (no "we initially
   thought X" — that belongs in AUDIT-LOG.md). State plainly whether
-  Source-Verifier ran this round or was skipped for lack of a codebase
-  connection, and whether Defect-Triage ran or was skipped because Verifier
-  returned no REJECTED/BLOCKED row or lineage gap — never leave either
-  ambiguous.
+  Source-Verifier ran this round, ran but couldn't locate a root cause, or
+  was skipped for lack of a codebase connection; and whether Defect-Triage
+  ran or was skipped because Verifier returned no REJECTED/BLOCKED row or
+  lineage gap — never leave any of these ambiguous. For each defect raised,
+  if Source-Verifier didn't run or found nothing, say so directly in the
+  same field rather than leaving it blank (e.g. "source file:line not
+  available — no codebase connection configured" or "not located in
+  code").
 - Update `FLOWS-LOG.md`'s coverage table using the Coverage Report template
   shape below.
 - Append one `AUDIT-LOG.md` entry: what was checked this round, what was
@@ -418,7 +450,10 @@ leave Status as whatever Executor observed, labeled provisional.
 Plan reached a final Status (Pass/Fail/Blocked) — a fact about
 completeness, independent of whether those outcomes were themselves passes
 or failures, e.g. "12/12 planned rows closed" or "2 of 12 rows still
-Blocked pending UAT data."
+Blocked pending UAT data." A row with Status `Fail` that has since had a
+Bug Report written for it in `DEFECT-LOG.md` still counts as closed — it
+reached a final Status and was root-caused; only a row still awaiting
+retry, triage, or missing data stays open.
 
 ### Data Lineage row shape (`DATA-LINEAGE.md`)
 
@@ -436,6 +471,14 @@ confirm a source at all, still add the row rather than omitting it: set
 didn't resolve>` and "Verification method" to `unconfirmed`. "First
 confirmed" and "Last reconfirmed" are calendar dates in `YYYY-MM-DD`
 format.
+
+`DATA-LINEAGE.md` tracks where a value's source of truth lives, not
+whether the app currently implements it correctly — a row's content
+doesn't change just because the same field also turned up a defect
+elsewhere in this round's pipeline. If Source-Verifier's dynamic-vs-hardcoded
+check is what actually surfaced the defect, that's worth a short
+cross-reference to the `DEFECT-LOG.md` entry, but the row's Source/config
+screen and Verification method still describe the source, not the defect.
 
 ## Subagent Dispatch Rules (cross-cutting)
 
