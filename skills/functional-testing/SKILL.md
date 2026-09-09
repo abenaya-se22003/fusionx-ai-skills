@@ -61,7 +61,11 @@ append to correctly than one whose absence gets missed later.
 
 Also ask (or check a prior round's plan header for the answer already on
 record): is a codebase connection configured for this target — a local
-path or checkout the automation can actually read? If yes, record the path
+path or checkout the automation can actually read? "Configured" means the
+user has told you (this round or a prior one) a local filesystem path to
+a checked-out copy of the codebase — there is no separate setup step or
+config file; if that path isn't already on record, asking the user for it
+is what "checking" means here. If yes, record the path
 in this round's plan header and the Source-Verifier stage (8) runs. If no,
 record "Source-Verifier: not available — no codebase connection configured"
 in the plan header and skip stage 8 later — note the skip explicitly in the
@@ -77,10 +81,20 @@ any known risk areas. Don't guess scope from a screen name.
 
 If the source names a **specific change** (a ticket describing one new
 field, one modified validation rule, etc.), scope Discovery's first pass to
-exactly that change and its immediate dependents, then expand to the full
-Coverage Standard for the surrounding screen only if time/scope allows.
-Don't spend the first pass spread evenly across an entire module when the
-source document already tells you where the risk is concentrated.
+exactly that change and its immediate dependents — the field's own
+validation rule, any config/settings screen supplying a threshold or
+default it uses, and any other screen that reads or displays the same
+field or value — then expand to the full Coverage Standard for the
+surrounding screen only if time/scope allows. Don't spend the first pass
+spread evenly across an entire module when the source document already
+tells you where the risk is concentrated.
+
+This narrow-then-expand scoping is a deliberate, sanctioned exception to
+the global Playwright instructions' full-depth-first default — it still
+needs the same explicit user sign-off that default requires for any
+narrowed pass. State the narrow scope in the drafted plan's "Scope and
+exclusions" field so the user is approving it at the Stage 4 gate, not
+learning about it afterward.
 
 ### 2. Round-type selection
 
@@ -106,7 +120,9 @@ needs to flag and what the Executor needs to capture.
   extra during a snapshot pass and feeds whichever round type was chosen.
 - Check `DATA-LINEAGE.md` for each flagged candidate. If already mapped,
   mark it "reconfirm" rather than "discover" in the plan — don't rediscover
-  a dependency already on record.
+  a dependency already on record. The Test Plan template has no separate
+  column for this — record it as a `[discover]` or `[reconfirm]` prefix on
+  the row's Scenario cell.
 - Draft the round's plan using the Test Plan template below and save it as
   `FUNCTIONAL-TEST-PLAN-<topic>.md` at the target project root (not in this
   skill repo). Include the scenario table, safety authorization, and data
@@ -139,8 +155,10 @@ Dispatch one fresh `Agent` tool call, `subagent_type: "general-purpose"`,
   Capture rules from the global instructions.
 - This explicit instruction: "Record raw network requests/responses for
   every action you perform, tagged with the action that triggered them, in
-  a network-capture log file. Do not summarize them away — Traceability and
-  Verifier need the raw entries."
+  a network-capture log file named `NETWORK-CAPTURE-<round-id>.md` at the
+  target project root — one heading per action, followed by its raw
+  request/response pairs underneath. Do not summarize them away —
+  Traceability and Verifier need the raw entries."
 - This explicit instruction: "If you reach a destructive/irreversible
   action with no disposable UAT record available, or a genuinely ambiguous
   step the plan doesn't resolve, stop and report back rather than deciding
@@ -203,16 +221,23 @@ need browser access, it never touches the live app) for **each** of these
 input sets that has entries this round:
 
 - Every `DATA-LINEAGE.md` row Traceability added or reconfirmed this round
-  (round types B/C only) — prompt: "Given this claimed data source (module,
+  with a confirmed source (round types B/C only) — skip any row Traceability
+  recorded as `UNCONFIRMED`; there's no claimed source yet for Source-Verifier
+  to check code against, and that stays open as a Traceability gap, not a
+  Source-Verifier task. Prompt: "Given this claimed data source (module,
   screen, API endpoint, and the config/settings screen Traceability
   identified), find the actual code that implements this — the validation
   rule, the query, or the config lookup. Confirm whether the code's real
   behavior matches what Traceability observed from the UI/API alone (for
   example: a dropdown that looks config-driven from the API response but
   is actually hardcoded in code, or a threshold that looks configurable
-  but has a hardcoded override). Report file/line references. If the code
-  contradicts the UI-observed behavior, say so explicitly — that is a
-  finding, not a detail to smooth over."
+  but has a hardcoded override). Specifically check whether the code reads
+  the config/settings value dynamically at runtime, rather than merely
+  containing a value that happens to currently match it — a hardcoded
+  constant that coincidentally equals today's config value will silently
+  diverge the next time someone changes the setting. Report file/line
+  references. If the code contradicts the UI-observed behavior, say so
+  explicitly — that is a finding, not a detail to smooth over."
 - Every Verifier-REJECTED row — prompt: "Given this failing case (what was
   expected, what was actually observed), find the code path responsible
   and identify the precise cause — not just 'it fails' but the actual
@@ -240,10 +265,16 @@ Dispatch one fresh `Agent` tool call. The prompt must include:
   and, if provided, the Source-Verifier finding — not just what the UI
   shows. Classify each confirmed defect using exactly one of:
   ApplicationDefect, SuspectedDefect, AutomationIssue, EnvironmentIssue,
-  TestDataIssue, ExpectedBehaviour, NeedsBusinessReview. Write one Bug
-  Report entry (see template below) per confirmed defect into
-  `DEFECT-LOG.md` at the project root, appending — never overwrite prior
-  entries."
+  TestDataIssue, ExpectedBehaviour, NeedsBusinessReview — if it's genuinely
+  unclear whether an observed behavior is a defect or intended design, that
+  uncertainty is itself what NeedsBusinessReview is for; don't guess and
+  don't stop to ask the user mid-triage. Write one Bug Report entry (see
+  template below) per confirmed defect into `DEFECT-LOG.md` at the project
+  root, appending — never overwrite prior entries. Fill every template
+  field yourself from what you directly observed or retried —
+  'Reproducibility' from your own retry results, 'Suggested severity' from
+  the business impact of the observed failure — don't leave fields blank
+  for the main thread to backfill later."
 
 ### 10. Reporting (main thread)
 
@@ -338,6 +369,12 @@ Dispatch one fresh `Agent` tool call. The prompt must include:
 - Known limitations and recommended next action:
 ```
 
+"Coverage closure result" states whether every row in this round's Test
+Plan reached a final Status (Pass/Fail/Blocked) — a fact about
+completeness, independent of whether those outcomes were themselves passes
+or failures, e.g. "12/12 planned rows closed" or "2 of 12 rows still
+Blocked pending UAT data."
+
 ### Data Lineage row shape (`DATA-LINEAGE.md`)
 
 ```markdown
@@ -348,7 +385,12 @@ Dispatch one fresh `Agent` tool call. The prompt must include:
 "Verification method" is `UI/API observation` when only Traceability
 confirmed the row, or `source code (file:line)` when Source-Verifier also
 cross-checked it against the actual implementation — always prefer
-recording the stronger of the two when both ran.
+recording the stronger of the two when both ran. If Traceability could not
+confirm a source at all, still add the row rather than omitting it: set
+"Source/config screen" to `UNCONFIRMED — <what was checked and why it
+didn't resolve>` and "Verification method" to `unconfirmed`. "First
+confirmed" and "Last reconfirmed" are calendar dates in `YYYY-MM-DD`
+format.
 
 ## Subagent Dispatch Rules (cross-cutting)
 
@@ -359,6 +401,11 @@ recording the stronger of the two when both ran.
 - Always foreground/blocking (`run_in_background: false`) — this pipeline
   is sequential; each stage's output gates the next, so nothing here should
   run unattended.
+- Executor, Traceability, Verifier, and Defect-Triage all operate the same
+  already-authenticated browser session established during Discovery
+  (stage 3) — none of them attempts its own login or assumes a fresh
+  unauthenticated session. Source-Verifier is the only role that never
+  touches the browser at all (see below).
 - Never dispatch the same subagent instance to both do a piece of work and
   verify or retry that same piece of work. Each stage that re-checks
   anything gets a brand-new dispatch.
@@ -385,3 +432,8 @@ recording the stronger of the two when both ran.
 - When a blocker or gap is found, tell the user and ask whether to keep
   investigating or stop and document it as-is — never decide silently
   either way.
+- If a dispatched subagent errors out, times out, or returns output that
+  doesn't actually satisfy its stage's instructions, dispatch one fresh
+  retry of the same role before escalating to the user — never advance to
+  the next stage on a failed or unusable dispatch, and never have the
+  orchestrating thread fill in the missing result itself.
