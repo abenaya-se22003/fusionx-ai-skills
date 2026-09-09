@@ -114,6 +114,40 @@ sign-off) to run headless.
   as `skills/<new-skill-name>/`, new agents as `agents/<new-agent-name>.md`.
   Don't let project-specific working data leak in.
 
+## `functional-testing` skill (built after `user-manual-update`)
+
+- `skills/functional-testing/SKILL.md` + `gotchas.md` — full QA-style
+  functional testing of the live FusionX UI: transaction-lifecycle testing
+  (create/edit/submit/approve/reject/delete, not read-only) plus
+  data-lineage traceability (UI value → API call → config/source screen),
+  via a 5-role subagent pipeline (Executor, Traceability, Verifier,
+  Source-Verifier, Defect-Triage) dispatched per round, gated by an upfront
+  round-type choice (A: functional only, B: full traceability, C: targeted
+  traceability) and, independently, by whether a codebase connection is
+  configured (Source-Verifier only — cross-checks confirmed UI/API
+  behavior against the actual implementation, degrades to an explicit skip
+  note when no codebase is available).
+- Confirms the `user-manual-update` handoff's core lesson again: fresh-
+  subagent validation with a hypothetical scenario found real gaps every
+  round it ran — 20 validation rounds this time, closing a critical gap where
+  source-code contradictions couldn't reach DEFECT-LOG when the functional
+  Verifier had already returned CONFIRMED for that same row.
+- New pattern this skill adds: a single subagent role can be reused across
+  multiple "modes" (round types A/B/C here) by keeping the role's prompt
+  shape fixed and only varying its input scope — avoids needing per-type
+  subagent variants.
+- Reused `fusionx-test-agent-v0.1.1`'s own templates (`test-plan.md`,
+  `bug-report.md`, `coverage-report.md`, `run-summary.md`) and defect
+  taxonomy instead of inventing new ones — that tool already had these
+  worked out for its own (currently disabled) scenario/bug-triage modes.
+- Fresh-subagent validation for a document this dense didn't converge to a
+  literal zero-gap round even after 20 rounds — the useful completion signal
+  turned out to be "zero structural contradictions found" (achieved) rather
+  than "zero gaps found" (not achieved, and per the human's own call, not
+  required). If building another skill with many interacting stages/roles,
+  expect the same and plan for a human-set round cap rather than an
+  open-ended zero-gap loop.
+
 ## Where the deeper history lives
 
 This session's full reasoning (including the earlier back-and-forth on
