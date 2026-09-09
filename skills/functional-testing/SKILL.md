@@ -390,7 +390,17 @@ Only if Verifier returned any REJECTED or BLOCKED row, an unconfirmed
 lineage gap, or Source-Verifier flagged a `DATA-LINEAGE.md` row as
 contradicting the UI-observed behavior (this last case applies even if
 Verifier returned CONFIRMED for the corresponding functional row — see
-stage 8). Dispatch one fresh `Agent` tool call. The prompt must include:
+stage 8). Exception: a BLOCKED row that is destructive/irreversible with no
+disposable UAT record available, where the user already resolved it at the
+stage 5 escalation (e.g. "document as Blocked, don't pursue further"), does
+not go to Defect-Triage — there is nothing to retry (no disposable record
+exists) and nothing to classify (it isn't an application-behavior question,
+it's a data/authorization constraint the user already decided on). Take it
+straight to Reporting as a closed Blocked row instead. Only route a BLOCKED
+row to Defect-Triage when the block is something Defect-Triage could
+plausibly investigate or retry (e.g. a screen was unreachable, environment
+data was missing) rather than a destructive step the user already declined
+to authorize. Dispatch one fresh `Agent` tool call. The prompt must include:
 
 - Every REJECTED/BLOCKED row, lineage gap, and Source-Verifier-flagged
   contradiction, with Verifier's evidence (its entry in
@@ -487,7 +497,15 @@ leave Status as whatever Executor observed, labeled provisional — write it
 as `<value> (provisional)`, e.g. `Pass (provisional)`. Once stage 7
 completes, replace it outright with Verifier's plain `Pass`/`Fail`/`Blocked`
 (no provisional suffix) rather than appending to or annotating the
-provisional value.
+provisional value. For a row Executor stopped and reported back on (stage
+5 escalation) rather than observing a result for, the main thread — not
+Executor — writes `Blocked (provisional)` directly into the plan once the
+user's escalation answer resolves it (e.g. "document as Blocked"); this is
+the one case where the main thread edits the Test Plan file itself rather
+than a dispatched role, because the escalation and its resolution both
+happen in the main thread, not inside a subagent. Verifier still
+independently re-confirms this row per its own dispatch instructions and
+its result replaces the provisional value the same as any other row.
 
 ### Bug Report (one per confirmed defect, appended to `DEFECT-LOG.md`)
 
