@@ -684,7 +684,21 @@ screen and Verification method still describe the source, not the defect.
   via `playwright-cli list`/`tab-list`, per `../user-manual-update/
   gotchas.md`) rather than launching a new browser instance. Source-Verifier
   is the only role that never touches the browser at all (see below). This
-  holds across rounds within one working session too: if a second,
+  rule covers the default single-role case. A row that structurally
+  requires a second, different authenticated identity to complete (e.g. a
+  maker-checker approval step where the app enforces that the submitter
+  cannot also approve) is a genuinely ambiguous step this rule doesn't
+  resolve on its own — Executor stops and reports back per its Stage 5
+  escalation instruction rather than attempting a second login itself; the
+  main thread asks the human to authenticate the second role in a separate
+  browser context/tab, then hands that context's identifier back to the
+  same dispatch to resume against. Label which step needs which role
+  directly in the Scenario cell (e.g. "As Maker: submit. As Checker:
+  approve.") since the Test Plan table has no separate role column.
+  Verifier's independent re-check of such a row is subject to the same
+  escalation the first time it needs the second identity — it is not
+  expected to authenticate as a second user unassisted any more than
+  Executor was. This holds across rounds within one working session too: if a second,
   unrelated round (different module, different topic) starts later in the
   same session, its Discovery (stage 3) navigates to the new module in the
   same already-authenticated browser session rather than relaunching or
