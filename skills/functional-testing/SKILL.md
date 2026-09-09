@@ -244,6 +244,15 @@ Dispatch one fresh `Agent` tool call, `subagent_type: "general-purpose"`,
   Blocked as-is. Never resume Executor with a unilateral decision, and never
   treat "reported back" as itself a completed row — it stays open until the
   user's answer resolves it one way or the other.
+- If a row's precondition depends on a scheduled/external event outside the
+  automation's control (a batch job, an overnight accrual posting, anything
+  that happens on a clock rather than on demand), Executor does not sleep or
+  poll for it within one dispatch. Complete every row that's checkable now,
+  explicitly report which rows are pending until the event occurs and roughly
+  when that is, and stop there — same "stop and report back" shape as any
+  other blocked step, just triggered by time instead of missing data or
+  authorization. The main thread re-dispatches a fresh Executor call for the
+  pending rows only, after the event has occurred.
 
 Expected output: one evidence-backed result per plan row (not bare
 pass/fail — a screenshot/state reference and what was actually observed),
@@ -306,6 +315,14 @@ Executor or Traceability — it must not see their claimed results, only:
   information, not a claimed result — it doesn't compromise independence to
   tell Verifier which rows exist to check, only what Traceability claimed
   about them.
+- For a row whose expected result depends on a scheduled/external event (a
+  batch job, an accrual posting, anything time-gated rather than on-demand),
+  confirm the event has actually already occurred before recording a result
+  — check a timestamp, status field, or downstream effect that proves it ran,
+  don't just check as soon as dispatched and assume enough time has passed.
+  If it plainly hasn't occurred yet, that's not-yet-due, not a result: report
+  it back the same as any other unmet precondition rather than recording a
+  premature Pass/Fail.
 - This instruction: "Independently re-derive the actual result for every
   row yourself — re-navigate, re-check the live state, re-read the actual
   screen or data. Do not read or trust any prior claimed result. This is a
@@ -703,7 +720,22 @@ screen and Verification method still describe the source, not the defect.
   same session, its Discovery (stage 3) navigates to the new module in the
   same already-authenticated browser session rather than relaunching or
   re-logging in — the session belongs to the human's login for the whole
-  working session, not to any one round.
+  working session, not to any one round. This assumes a continuous working
+  session; it does not extend across a genuine multi-day gap forced by a
+  scheduled/external event a row's precondition depends on (see stages 5 and
+  7). When a stage resumes hours or days after the browser session was
+  established, treat the old session as presumptively expired rather than
+  assuming it survived — ask the human to re-authenticate before that
+  stage's dispatch runs, rather than discovering the session is dead
+  mid-dispatch. The round-id and every artifact filename stay the same
+  across this gap (the round hasn't restarted, it's only paused); only the
+  browser authentication is re-established. If the disposable record a
+  prior stage created is no longer reachable or usable when a later stage
+  resumes (auto-closed, archived, expired by the app's own lifecycle
+  rules), treat that the same as any other unmet precondition — report it
+  back rather than silently recreating or assuming, and let the user decide
+  whether to recreate the prerequisite sequence fresh or document the row
+  as Blocked.
 - When two rounds targeting different modules run back-to-back in the same
   session against the same project, every stage still runs per round from
   Stage 0 onward (Stage 0's file checks, Stage 2's round-type question, and
