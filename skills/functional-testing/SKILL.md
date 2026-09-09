@@ -107,11 +107,12 @@ needs to flag and what the Executor needs to capture.
 - Check `DATA-LINEAGE.md` for each flagged candidate. If already mapped,
   mark it "reconfirm" rather than "discover" in the plan — don't rediscover
   a dependency already on record.
-- Draft the round's plan using the Test Plan template below. Include the
-  scenario table, safety authorization, and data strategy (which records
-  are newly created for this round vs. existing UAT records being reused —
-  see the global instructions' Transaction Testing section for why both
-  matter).
+- Draft the round's plan using the Test Plan template below and save it as
+  `FUNCTIONAL-TEST-PLAN-<topic>.md` at the target project root (not in this
+  skill repo). Include the scenario table, safety authorization, and data
+  strategy (which records are newly created for this round vs. existing
+  UAT records being reused — see the global instructions' Transaction
+  Testing section for why both matter).
 - Explicitly flag any planned step that is destructive/irreversible with no
   disposable UAT record available — these become pause points for the
   Executor, not silent skips.
@@ -246,11 +247,12 @@ Dispatch one fresh `Agent` tool call. The prompt must include:
 
 ### 10. Reporting (main thread)
 
-- Compile `TEST-EXECUTION-REPORT-<round-id>.md` using the Run Summary
-  template below — the clean, user-facing deliverable. No process
-  narration (no "we initially thought X" — that belongs in AUDIT-LOG.md).
-  State plainly whether Source-Verifier ran this round or was skipped for
-  lack of a codebase connection — never leave that ambiguous.
+- Compile `TEST-EXECUTION-REPORT-<round-id>.md` at the target project root
+  (not in this skill repo) using the Run Summary template below — the
+  clean, user-facing deliverable. No process narration (no "we initially
+  thought X" — that belongs in AUDIT-LOG.md). State plainly whether
+  Source-Verifier ran this round or was skipped for lack of a codebase
+  connection — never leave that ambiguous.
 - Update `FLOWS-LOG.md`'s coverage table using the Coverage Report template
   shape below.
 - Append one `AUDIT-LOG.md` entry: what was checked this round, what was
@@ -350,6 +352,10 @@ recording the stronger of the two when both ran.
 
 ## Subagent Dispatch Rules (cross-cutting)
 
+- All five dispatched roles — Executor, Traceability, Verifier,
+  Source-Verifier, Defect-Triage — use `subagent_type: "general-purpose"`.
+  This applies even where a stage's own dispatch instructions don't repeat
+  it.
 - Always foreground/blocking (`run_in_background: false`) — this pipeline
   is sequential; each stage's output gates the next, so nothing here should
   run unattended.
