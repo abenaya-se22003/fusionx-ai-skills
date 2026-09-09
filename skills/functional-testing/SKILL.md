@@ -170,6 +170,21 @@ needs to flag and what the Executor needs to capture.
   rule from the global instructions applied to a field whose branching
   driver happens to be a currency/product selector rather than the field's
   own dropdown.
+- A UI language switcher is a selectable control the same as any other, so a
+  screen tested under one language and never re-checked in a second
+  supported language is not fully covered — apply the same per-value branch
+  rule above, treating each supported language as a value. Record each
+  language's exact displayed labels separately (the global "record every
+  static value exactly as displayed" rule applies per language, not just
+  once); note in the Evidence column or the screenshot filename which
+  language the evidence was captured in so a later reader isn't left
+  guessing which language a given Pass/Fail reflects. Separately from the
+  displayed-label branch, confirm the underlying submitted/stored value
+  (the option code sent to the API, visible in the network-capture log
+  Executor already produces regardless of round type) stays identical
+  across languages even though its displayed label changes — this is an
+  ordinary functional assertion using evidence the pipeline already
+  captures, not a new capture requirement.
 - Check `DATA-LINEAGE.md` for each flagged candidate. "Already mapped" means
   that exact `Module.Screen.Field` has its own existing row — a different
   field is its own row and starts as `[discover]` even if you suspect it
@@ -793,7 +808,16 @@ screen and Verification method still describe the source, not the defect.
   same session, its Discovery (stage 3) navigates to the new module in the
   same already-authenticated browser session rather than relaunching or
   re-logging in — the session belongs to the human's login for the whole
-  working session, not to any one round. This assumes a continuous working
+  working session, not to any one round. A UI-level preference that's part
+  of that session's mutable state — a language switcher is the clearest
+  example — is not guaranteed to still be set the way an earlier stage left
+  it by the time a later stage's dispatch runs. Any row whose Scenario or
+  Preconditions names a specific language (per Stage 3's per-language branch
+  rule) must have the dispatched role explicitly (re)select that language
+  itself before acting, rather than trusting whatever the shared session
+  currently happens to have set — silently inheriting the wrong language
+  produces a false Pass or false Fail that looks like a normal result. This
+  assumes a continuous working
   session; it does not extend across a genuine multi-day gap forced by a
   scheduled/external event a row's precondition depends on (see stages 5 and
   7). When a stage resumes hours or days after the browser session was
