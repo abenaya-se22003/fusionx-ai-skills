@@ -116,8 +116,14 @@ needs to flag and what the Executor needs to capture.
   (buttons, dropdowns, tabs, modals, nested records, row actions, etc.).
 - Regardless of round type, flag candidates cheaply: any dropdown, field,
   or derived value that looks config-driven, validated against another
-  module, or calculated rather than directly entered. This costs nothing
-  extra during a snapshot pass and feeds whichever round type was chosen.
+  module, or calculated rather than directly entered. "Cheaply" means
+  labeling what the required Coverage Standard pass already surfaces (you
+  open every dropdown anyway to enumerate its options — flagging is just
+  noting which ones look config-driven while you're already there) — it is
+  not a shortcut that lets you skip opening a control, and it does not
+  defer or replace the full-depth pass the global instructions require.
+  Actually chasing down the source screen is Traceability's job (stage 6),
+  not Discovery's.
 - Check `DATA-LINEAGE.md` for each flagged candidate. If already mapped,
   mark it "reconfirm" rather than "discover" in the plan — don't rediscover
   a dependency already on record. The Test Plan template has no separate
@@ -125,10 +131,13 @@ needs to flag and what the Executor needs to capture.
   the row's Scenario cell.
 - Draft the round's plan using the Test Plan template below and save it as
   `FUNCTIONAL-TEST-PLAN-<topic>.md` at the target project root (not in this
-  skill repo). Include the scenario table, safety authorization, and data
-  strategy (which records are newly created for this round vs. existing
-  UAT records being reused — see the global instructions' Transaction
-  Testing section for why both matter).
+  skill repo). `<topic>` is a short kebab-case label for the module/feature
+  under test this round (e.g. `lending-collateral-coverage-ratio`) — pick
+  something specific enough to tell this round's files apart from another
+  round's in the same project. Include the scenario table, safety
+  authorization, and data strategy (which records are newly created for
+  this round vs. existing UAT records being reused — see the global
+  instructions' Transaction Testing section for why both matter).
 - Explicitly flag any planned step that is destructive/irreversible with no
   disposable UAT record available — these become pause points for the
   Executor, not silent skips.
@@ -158,7 +167,12 @@ Dispatch one fresh `Agent` tool call, `subagent_type: "general-purpose"`,
   a network-capture log file named `NETWORK-CAPTURE-<round-id>.md` at the
   target project root — one heading per action, followed by its raw
   request/response pairs underneath. Do not summarize them away —
-  Traceability and Verifier need the raw entries."
+  Traceability and Verifier need the raw entries." `<round-id>` is a short
+  sequential label unique within the target project (e.g. `round-1`,
+  `round-2`) — check existing `TEST-EXECUTION-REPORT-*.md` files at the
+  project root for the highest number used so far and increment it; use
+  `round-1` if none exist yet. Use the same `<round-id>` for every artifact
+  this round produces (network-capture log, test-execution report).
 - This explicit instruction: "If you reach a destructive/irreversible
   action with no disposable UAT record available, or a genuinely ambiguous
   step the plan doesn't resolve, stop and report back rather than deciding
@@ -184,10 +198,16 @@ include:
   called. Then navigate to the screen you believe is the true source of
   that value (commonly a Settings/Configuration module screen) and confirm
   it directly — don't infer the source from the endpoint name alone.
-  Update `DATA-LINEAGE.md` at the project root: add a new row, or refresh
-  the 'Last reconfirmed' date on an existing one. If you cannot confirm a
-  source for an entry, record that as a gap in the same file — do not
-  silently drop it or mark it resolved."
+  Update `DATA-LINEAGE.md` at the project root (see the Data Lineage
+  template below for the exact row format): add a new row, or refresh the
+  'Last reconfirmed' date on an existing one. If you looked and found no
+  admin/config screen at all — the value is hardcoded, computed, or served
+  by an external system with nothing to navigate to — that is itself a
+  confirmed finding: record the source screen as `hardcoded — no config
+  screen found` (or the equivalent), not as unconfirmed. Only use
+  `UNCONFIRMED` when you simply haven't been able to locate the source yet
+  and more digging might still find it — do not silently drop either kind
+  of entry or mark it resolved when it isn't."
 
 ### 7. Verifier dispatch
 
@@ -195,15 +215,28 @@ Dispatch one fresh `Agent` tool call with **no shared context** with
 Executor or Traceability — it must not see their claimed results, only:
 
 - The confirmed test plan (every row), exactly as given to Executor.
-- Which round type was selected (so it knows whether to also re-check
-  `DATA-LINEAGE.md` rows touched this round).
+- Which round type was selected, and — if B or C — the same
+  flagged-candidate list (type C) or full action list (type B) that was
+  given to Traceability, so Verifier knows exactly which
+  `DATA-LINEAGE.md` rows are in scope this round. This is scope
+  information, not a claimed result — it doesn't compromise independence to
+  tell Verifier which rows exist to check, only what Traceability claimed
+  about them.
 - This instruction: "Independently re-derive the actual result for every
   row yourself — re-navigate, re-check the live state, re-read the actual
   screen or data. Do not read or trust any prior claimed result. This is a
-  full re-check of every row, never a sample. If this round included
-  traceability, independently re-confirm every `DATA-LINEAGE.md` row it
-  touched the same way — re-navigate to the claimed source screen yourself.
-  Return CONFIRMED or REJECTED per row, each with its own fresh evidence."
+  full re-check of every row, never a sample. Where the plan's data
+  strategy calls for a newly created record, create your own fresh
+  disposable record and execute the row's steps against it — don't ask for
+  or rely on the specific record Executor created; an independent check
+  means an independently produced result, not a re-read of Executor's
+  artifact. If this round included traceability, independently re-confirm
+  every `DATA-LINEAGE.md` row in scope this round the same way —
+  re-navigate to the claimed source screen yourself. Return CONFIRMED,
+  REJECTED, or BLOCKED per row, each with its own fresh evidence — BLOCKED
+  is for when the row's precondition or environment genuinely prevents
+  execution (missing data, screen unreachable), not for when the observed
+  behavior simply fails to match expectation, which is REJECTED."
 
 If Verifier's evidence contradicts Executor's or Traceability's claim, the
 Verifier's independently-derived result is what's recorded — flag the
@@ -218,7 +251,12 @@ the skip in the round's report at stage 10, don't just drop it quietly.
 If a codebase is configured, dispatch one fresh `Agent` tool call (with
 `Read`/`Grep`/`Glob` access to the configured codebase path — it doesn't
 need browser access, it never touches the live app) for **each** of these
-input sets that has entries this round:
+input sets that has entries this round. If the frontend and the
+backend/config service live in separate repos and the user has given you
+more than one path, record each in the plan header and point Source-Verifier
+at whichever repo actually contains the relevant module — or grant access to
+all configured paths if the boundary isn't obvious and let it search across
+them.
 
 - Every `DATA-LINEAGE.md` row Traceability added or reconfirmed this round
   with a confirmed source (round types B/C only) — skip any row Traceability
@@ -252,10 +290,10 @@ observation" wherever Source-Verifier ran).
 
 ### 9. Defect-Triage dispatch
 
-Only if Verifier returned any REJECTED row or unconfirmed lineage gap.
-Dispatch one fresh `Agent` tool call. The prompt must include:
+Only if Verifier returned any REJECTED or BLOCKED row, or an unconfirmed
+lineage gap. Dispatch one fresh `Agent` tool call. The prompt must include:
 
-- Every REJECTED row and lineage gap, with Verifier's evidence.
+- Every REJECTED/BLOCKED row and lineage gap, with Verifier's evidence.
 - Source-Verifier's file/line root-cause findings for that row, if stage 8
   ran and produced one — include it verbatim so Defect-Triage doesn't have
   to re-derive what's already been found.
@@ -283,7 +321,9 @@ Dispatch one fresh `Agent` tool call. The prompt must include:
   clean, user-facing deliverable. No process narration (no "we initially
   thought X" — that belongs in AUDIT-LOG.md). State plainly whether
   Source-Verifier ran this round or was skipped for lack of a codebase
-  connection — never leave that ambiguous.
+  connection, and whether Defect-Triage ran or was skipped because Verifier
+  returned no REJECTED/BLOCKED row or lineage gap — never leave either
+  ambiguous.
 - Update `FLOWS-LOG.md`'s coverage table using the Coverage Report template
   shape below.
 - Append one `AUDIT-LOG.md` entry: what was checked this round, what was
@@ -311,6 +351,11 @@ Dispatch one fresh `Agent` tool call. The prompt must include:
 
 ## Risks, dependencies, deferred work, and exit criteria
 ```
+
+A row's Status is filled in from Verifier's per-row result once Verifier
+has run (stage 7): `Pass` for CONFIRMED where the expected result was
+observed, `Fail` for REJECTED, `Blocked` for BLOCKED. Before Verifier runs,
+leave Status as whatever Executor observed, labeled provisional.
 
 ### Bug Report (one per confirmed defect, appended to `DEFECT-LOG.md`)
 
@@ -404,8 +449,21 @@ format.
 - Executor, Traceability, Verifier, and Defect-Triage all operate the same
   already-authenticated browser session established during Discovery
   (stage 3) — none of them attempts its own login or assumes a fresh
-  unauthenticated session. Source-Verifier is the only role that never
-  touches the browser at all (see below).
+  unauthenticated session. Find and attach to that existing session (e.g.
+  via `playwright-cli list`/`tab-list`, per `../user-manual-update/
+  gotchas.md`) rather than launching a new browser instance. Source-Verifier
+  is the only role that never touches the browser at all (see below).
+- Every dispatched role is a `general-purpose` subagent and so has full
+  tool access, including `Write` — it writes its own artifacts directly
+  (network-capture log, `DATA-LINEAGE.md` rows, `DEFECT-LOG.md` entries,
+  etc.) per its stage's instructions; the main thread does not need to
+  transcribe a subagent's findings into these files on its behalf.
+- Wherever a stage's dispatch instructions say a subagent "must include" or
+  "is given" something (a test plan, a network-capture log, a
+  `DATA-LINEAGE.md` row), deliver it either inline in the dispatch prompt
+  text or as an exact file path plus explicit confirmation the subagent may
+  read it — never assume a fresh subagent already knows where a file lives
+  or what it contains.
 - Never dispatch the same subagent instance to both do a piece of work and
   verify or retry that same piece of work. Each stage that re-checks
   anything gets a brand-new dispatch.
