@@ -270,12 +270,27 @@ Executor or Traceability — it must not see their claimed results, only:
   precondition or environment genuinely prevents execution (missing data,
   screen unreachable, a flagged destructive step with no disposable record),
   not for when the observed behavior simply fails to match expectation,
-  which is REJECTED."
+  which is REJECTED. Write this evidence — your per-row result plus
+  screenshot/state references, and, for any row involving an API
+  interaction, the raw request/response you observed during your own
+  independent execution — to `VERIFIER-FINDINGS-<round-id>.md` at the
+  project root (same `<round-id>` as this round's other artifacts); one
+  heading per row. Downstream stages read Verifier's evidence from this
+  file, not from Executor's network-capture log, for whatever Verifier
+  itself independently observed."
 
 If Verifier's evidence contradicts Executor's or Traceability's claim, the
 Verifier's independently-derived result is what's recorded — flag the
 discrepancy itself as a finding too (it usually indicates the earlier
-subagent reported an unverified guess).
+subagent reported an unverified guess). Record this discrepancy in the
+round's `AUDIT-LOG.md` entry at stage 10 (per that stage's process-narration
+rule: this is exactly the kind of prior-finding-corrected note that belongs
+there), naming which stage's claim was wrong and what the independent
+re-check actually found. Do not add a discrepancy field to the Test Plan,
+Bug Report, or Run Summary templates — those stay to the clean, current-state
+facts (the row's final Status, and — if the underlying behavior is a
+confirmed defect — its Bug Report), per stage 10's rule against process
+narration in user-facing deliverables.
 
 ### 8. Source-Verifier dispatch
 
@@ -324,10 +339,10 @@ before.
   explicitly — that is a finding, not a detail to smooth over."
 - Every Verifier-REJECTED row — include the test plan row (Scenario,
   Preconditions, Steps, Expected), Verifier's own evidence for the
-  rejection, and the relevant slice of the network-capture log so
-  Source-Verifier has the actual test context (what was tested, with what
-  data, and what the app actually returned), not just a bare pass/fail
-  claim. Prompt: "Given this failing case (what was expected, what was
+  rejection (its entry in `VERIFIER-FINDINGS-<round-id>.md`), and the
+  relevant slice of Executor's network-capture log so Source-Verifier has
+  the actual test context (what was tested, with what data, and what the
+  app actually returned), not just a bare pass/fail claim. Prompt: "Given this failing case (what was expected, what was
   actually observed), find the code path responsible and identify the
   precise cause — not just 'it fails' but the actual faulty condition,
   missing check, or incorrect value in the code. Report file/line
@@ -361,7 +376,8 @@ Verifier returned CONFIRMED for the corresponding functional row — see
 stage 8). Dispatch one fresh `Agent` tool call. The prompt must include:
 
 - Every REJECTED/BLOCKED row, lineage gap, and Source-Verifier-flagged
-  contradiction, with Verifier's evidence and the relevant slice of the
+  contradiction, with Verifier's evidence (its entry in
+  `VERIFIER-FINDINGS-<round-id>.md`) and the relevant slice of Executor's
   network-capture log (Defect-Triage needs the actual request/response, not
   just Verifier's narrative, to root-cause before treating anything as
   reproducible).
@@ -449,7 +465,11 @@ stage 8). Dispatch one fresh `Agent` tool call. The prompt must include:
 A row's Status is filled in from Verifier's per-row result once Verifier
 has run (stage 7): `Pass` for CONFIRMED where the expected result was
 observed, `Fail` for REJECTED, `Blocked` for BLOCKED. Before Verifier runs,
-leave Status as whatever Executor observed, labeled provisional.
+leave Status as whatever Executor observed, labeled provisional — write it
+as `<value> (provisional)`, e.g. `Pass (provisional)`. Once stage 7
+completes, replace it outright with Verifier's plain `Pass`/`Fail`/`Blocked`
+(no provisional suffix) rather than appending to or annotating the
+provisional value.
 
 ### Bug Report (one per confirmed defect, appended to `DEFECT-LOG.md`)
 
