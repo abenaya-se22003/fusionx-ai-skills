@@ -10,26 +10,110 @@ description: Use when a Jira ticket or user request asks to create or update a F
 Orchestrates the full pipeline for turning a Jira ticket into a delivered
 module user manual: scope → live UAT walkthrough → **Gate A** (coverage
 validation) → docx build → export/QC → **Gate B** (content/formatting
-validation) → delivery. Three governing documents already live at the repo
-root and hold the actual rules — this skill sequences them and adds
-operational lessons not yet folded into those docs. It does not restate what
-they already say.
+validation) → delivery. This skill is self-contained — it does not depend on
+any file outside this folder. Everything needed (coverage standard, manual
+production rules, build/QC scripts, environment gotchas) lives here so it
+works in any project it's dropped into, not just the one it was authored in.
 
 ## Read First, In Order
 
-1. `README.md` (repo root) — folder map, end-to-end workflow, deliverables list.
-2. `Playwright-Full-Coverage-Instructions.md` (repo root) — how deep the UAT
-   walkthrough must go. Default is full depth immediately, never a
-   breadth-only/title-only pass.
-3. `User-Manual-Production-Instructions.md` (repo root) — what the manual
-   document itself must contain: structure, hard content rules, numbering
-   safety, screenshot rules, pre-delivery validation checklist.
-4. `gotchas.md` (this skill folder) — operational/environment lessons learned
-   across prior module updates that aren't written into the two docs above.
+1. "Coverage Standard — UAT Walkthrough" below — how deep the UAT walkthrough
+   must go. Default is full depth immediately, never a breadth-only/title-only
+   pass.
+2. "Manual Production Rules" below — what the manual document itself must
+   contain: structure, hard content rules, numbering safety, screenshot rules,
+   pre-delivery validation checklist.
+3. `gotchas.md` (this skill folder) — operational/environment lessons learned
+   across prior module updates that aren't written into the sections above.
 
 Do not skip ahead to writing UAT steps or manual content without reading the
-governing doc for that phase first — each was written because skipping it
+governing section for that phase first — each was written because skipping it
 caused real, repeat-costing rework.
+
+## Coverage Standard — UAT Walkthrough
+
+Governs step 2 (Walk UAT) and what Gate A checks. **Default to full depth
+immediately** — never a breadth-only/title-only pass that only checks entry
+points, tile titles, or default/landing states. Never conclude a screen has
+"no target content" from its name or menu label. Open it.
+
+**Session and access:** drive the browser with `playwright-cli` only (see
+`gotchas.md` for how to find/reuse a session and work around click/rendering
+quirks). Keep the browser visible for login/MFA; wait for the user to confirm
+login before touching authenticated screens. Don't enter excluded
+systems/modules until explicitly authorized. Don't expose credentials,
+tokens, or personal data in notes or screenshots.
+
+**Cover every in-scope item:** dashboard/landing entry points; every
+sidebar/top-nav process, parent menu, and nested menu item; every screen,
+tab, accordion, card, modal, drawer, wizard step, sub-screen; every button,
+icon button, link, row action, clickable field; search/filter/sort/pagination/
+expand-collapse/reset/clear/cancel/back/close controls; add/create/save/
+submit/resubmit/view/edit/update/delete/approve/reject/assign actions where
+authorized; nested records (identifications, contacts, addresses, bank
+accounts, tax IDs, relationships, key persons, POAs); empty/populated/
+no-result/validation-error/success/pending/active/update/confirmation states;
+every approval category the app exposes, not just the default queue. Test
+both newly created records (validates the full creation lifecycle) and
+existing populated UAT records (validates inquiry, historical display,
+maintenance, nested-entry, downstream workflow) — if either type is
+unavailable, document the gap and reason rather than treating one as
+equivalent to the other.
+
+**Dropdowns and selectable controls** (dropdown, radio group, segmented
+control, switch, checkbox group, card selector, autocomplete, date/time
+picker):
+1. Open it. Record every static value exactly as displayed (capitalization,
+   spelling).
+2. Select every value at least once when it can change fields, validation,
+   navigation, or workflow behavior — one representative value is only
+   enough when the branch does **not** change the visible UI.
+3. Follow and test every branch a selection creates; inspect fields/
+   sub-screens that appear, disappear, become mandatory, or become enabled.
+4. Distinguish static values from dynamic/master-data results. For dependent
+   lookups (Bank→Branch→Product, Country→Province→District), document the
+   dependency and test representative parent values — don't describe a
+   temporary subset of a live lookup as a permanent complete list.
+5. Capture an expanded-control screenshot when the values matter to the
+   manual.
+
+**Search and filtering** — for every search-criterion selector: record all
+criteria; execute a valid matching value where test data exists; test a
+valid value with no match; test blank input and record the validation
+response; test clear/reset; verify result selection, Active/Pending tabs,
+pagination, and the details shown after selecting a result.
+
+**Transaction testing** — exercise creation and submission to completion
+where the UI/authorization permit; exercise updates and resubmission where
+permitted; exercise nested add/view/update/delete where present; exercise
+every approval type on both approve and reject paths with suitable test
+items, entering meaningful remarks where required; verify the resulting
+status, queue, audit info, or confirmation message. Never click a
+destructive control merely to inspect it — use a disposable UAT record or
+stop at the confirmation dialog when mutation isn't authorized. Never perform
+an irreversible/production-impacting action without clear authorization.
+
+**Evidence capture** — screenshot every major screen/process entry point;
+important initial/populated/review/confirmation/resulting states; expanded
+dropdowns and branch-changing selectors; add/view/edit/delete/submit/approve/
+reject/assignment-removal interfaces; nested-entry dialogs and completed
+nested-entry tables; search criteria, representative results, filters,
+relevant tabs. Capture continuously as you go — transient dropdown/dialog/
+validation/confirmation states may not be reproducible later. Use descriptive
+sequential filenames; exclude secrets/PII; keep bug-only screenshots separate
+from the manual's evidence set.
+
+**Defects and blockers** — record unexpected behavior with screen, steps,
+expected vs. actual result, and evidence, kept in a separate log from the
+manual. Before recording something as blocked, retry with more than one
+input combination (different records, filter values, or a fresh session) so
+the log reflects a reproducible defect, not a one-off fluke — note how many
+attempts were made. Before recording an unexplained gap (e.g. a screen that
+never returns data), inspect the underlying network request/response, not
+just the rendered UI, so the log captures a root cause where possible. When a
+blocker is found, tell the user and ask whether to keep investigating or stop
+and document it as-is — don't silently decide either way. Continue with
+unaffected branches instead of stopping the whole walkthrough.
 
 ## Workflow
 
@@ -58,7 +142,7 @@ caused real, repeat-costing rework.
    the user before building on it.
 2. **Walk UAT.** Drive the browser with `playwright-cli` only — never a
    project-specific test framework/agent that might also exist in the repo.
-   Follow the full Coverage Standard in `Playwright-Full-Coverage-Instructions.md`.
+   Follow the full "Coverage Standard — UAT Walkthrough" below.
    Capture screenshots continuously, not at the end. Keep defect/blocker
    evidence in a separate log from the start.
 3. **GATE A — Pre-Draft Coverage Validation.** Mandatory checkpoint, run
@@ -70,9 +154,10 @@ caused real, repeat-costing rework.
    read the real OOXML of the section you're extending: heading style names,
    numbering setup, caption convention, field-bullet pattern. Never assume —
    every module documented so far has differed in at least one of these.
-5. **Build.** Copy `Scripts/build_manual_template.py` into
+5. **Build.** Copy this skill's `scripts/build_manual_template.py` into
    `<Module>-Manual-Update/`, fill in CONFIG, write content with its helper
-   functions. Follow its docstring's required operation order exactly.
+   functions. Follow its docstring's required operation order exactly. See
+   "Manual Production Rules" below for structure/content requirements.
 6. **GATE B — Post-Build Content & Formatting Validation.** Mandatory
    checkpoint, run after export, before delivery. See "Gate B" below. Do not
    proceed to step 7 until both the mechanical (`qc_audit.py`) and
@@ -155,7 +240,7 @@ and present the result as the full sweep.
 
 ## Gate B — Post-Build Content & Formatting Validation
 
-Runs after `Scripts/to_pdf_export.py` (which re-saves the docx with a
+Runs after `scripts/to_pdf_export.py` (which re-saves the docx with a
 refreshed TOC/fields), before Deliver (step 7). Two layers, both required —
 the mechanical layer catches structural bugs invisible to a visual read; the
 hand-verify layer catches everything the script can't judge.
@@ -187,7 +272,7 @@ item against the file yourself. Report findings via ReportFindings, most
 severe first, CONFIRMED vs PLAUSIBLE.
 ```
 
-**Mechanical — `Scripts/qc_audit.py`** against the freshly re-saved docx
+**Mechanical — `scripts/qc_audit.py`** against the freshly re-saved docx
 (not the one the build script produced a moment earlier — Word's own save
 step can silently strip numbering that both python-docx and a same-session
 PDF tolerate). Its checks include, in order: the file actually opens in real
@@ -199,7 +284,7 @@ gapless top-level sequence; stale hardcoded chapter numbers baked into
 heading text. Fix and re-run steps 5–6 until clean.
 
 **Hand-verify** (the audit script cannot judge these — see "Pre-Delivery
-Validation" in `User-Manual-Production-Instructions.md` for the full
+Validation" in "Manual Production Rules" below for the full
 rationale behind each):
 - Grep the entire document, case-insensitive, for `"defect log"` — zero hits,
   full stop (see Hard Rules).
@@ -228,6 +313,223 @@ Every hand-verify item must be individually checked against the actual
 document (grep output, a real page read) before being ticked — "this is
 probably fine, I didn't change that area" is not a check. Only once both
 layers are clean does step 7 (Deliver) happen.
+
+## Manual Production Rules
+
+Governs step 4/5 (Inspect conventions, Build) and what Gate B's hand-verify
+checklist draws from. Applies whenever the task originates from a tracking
+ticket: treat its Done/not-done checklist as authoritative scope, treat the
+existing manual file itself (not a PDF attached to the ticket) as the source
+of truth for structure, and never modify/reformat/"clean up" out-of-scope
+content even if inconsistent.
+
+**Required front matter:** cover page; system/module/environment/observed
+app version; document title and unique reference; status and classification;
+owner and prepared-by; issue date; version control table; review/approval
+table; distribution/maintenance statement; document conventions; roles and
+responsibilities; access requirements/prerequisites; process overview; table
+of contents. Every material revision increments the version and adds a
+version-history entry (see the version-bump Hard Rule below — that Hard Rule
+overrides this for *when* a revision counts as material).
+
+**Organization** — by application navigation and business process: accessing
+the module; main/landing screen; sidebar and nested processes; search/
+inquiry; create/add; view; update/edit; delete/remove; submission/
+resubmission; approval/rejection; reports/admin functions; field/option
+reference; pre-action checklist. Create distinct subsections (Add, View,
+Update, Delete, Submit, Approve, Reject) whenever those functions exist —
+don't merge materially different operations into one vague screen
+description.
+
+**Procedure writing:** numbered lists for sequential actions, bullets for
+choices/controls/non-sequential info. Use exact UI field/button/tab/screen
+labels. Explain required fields, dependencies, validations, confirmations,
+resulting states, and what to verify before a state-changing action. State
+role/permission limitations affecting available controls. Never describe
+untested behavior as confirmed.
+- *Field/input presentation:* use the manual's established convention (e.g.
+  an asterisk alone marks required — don't add a redundant `Required.`
+  paragraph). Don't add generic helper text under self-explanatory field
+  names (`Enter the name`, `Select Manual or Auto`). Keep a field
+  explanation only when it conveys something not inferable from the label/
+  screenshot (validation rule, dependency, conditional field, dynamic
+  lookup, role restriction, required format). Removing helper-text bulk
+  doesn't remove the obligation to expose all verified dropdown options
+  separately. Keep Save/Create behavior, confirmations, resulting states,
+  and subsequent procedures as standalone procedure text even when adjacent
+  to a field list.
+- *Inline procedure lead-ins:* a short line introducing a procedure but not
+  part of the heading hierarchy (`View and update`, `Map products`) must be
+  visibly distinct (bold, bold-underline, or the manual's existing dedicated
+  style) — never indistinguishable from body text — and kept with the
+  content it introduces so it can't be stranded at a page break.
+
+**Dropdown and option formatting** — introduce the field by name; list every
+static option as separate bullets/numbered items, never embedded in a prose
+sentence; preserve UI capitalization/spelling exactly; explain the branch an
+option causes when relevant; use a table mapping fields→option lists when a
+screen has several selectors, with multi-option cells as bullet lists, not
+semicolons; label dynamic/dependent lookups as such rather than presenting a
+temporary result subset as a permanent list. Example:
+
+The available search criteria are:
+- **Customer Name**
+- **Customer Identification**
+- **Customer Reference Code**
+
+**Matching existing document conventions** (when extending, not starting
+fresh):
+1. Never invent a new heading style/numbering/bullet pattern — inspect the
+   actual OOXML of the immediately preceding section first. Different
+   chapters in the same manual can use different conventions; match the
+   chapter you're extending, not the document's most common one.
+2. Match the confirmed pattern exactly: heading style, field-then-description
+   layout, whether manual step numbers are used.
+3. When a new sub-section reuses a numbered heading style but starts a fresh
+   sequence (not a continuation), give it an explicit start override to
+   begin at 1.
+4. If in doubt, ask the user rather than guess — style mismatches are highly
+   visible and hard to catch without an XML diff.
+5. Match paragraph geometry, not just fonts/styles: left/right/hanging
+   indentation, alignment, before/after spacing, cloned from a confirmed
+   comparable paragraph. Never copy only the left indent and clear the
+   right. Don't hardcode indentation values from another module — every
+   manual can use different styles.
+6. Don't apply body-text indentation to screenshot paragraphs — clone the
+   manual's own figure paragraph properties.
+7. Before cloning a heading's `pPr` to fix/match another heading, confirm
+   whether the source uses a live Word multilevel-list number (`numPr`
+   drives auto-numbering) or has that explicitly disabled with the chapter
+   number typed as literal text (`numId=0`/empty override) — a document can
+   mix both even across visually identical headings. Check whether the
+   visible number already appears as literal characters in the source
+   paragraph's own runs before picking what to clone from. When the new
+   content is really a tab label or sub-topic, consider a bold inline
+   lead-in instead of a heading level to sidestep this risk entirely.
+
+**Heading numbering (multilevel lists)** — treat any numbering change with
+code-change rigor; defects here are invisible in source XML and only visible
+as wrong text on a rendered page:
+1. Don't assume two `numId`s count independently just because they normally
+   do — legacy multilevel-list definitions can leak counter state across
+   `numId`s sharing an `abstractNumId`. For an isolated list, clone the
+   source `abstractNum`'s level defs into a brand-new `abstractNumId` with
+   fresh, unique `<w:nsid>`/`<w:tmpl>` values.
+2. `numbering.xml` has a strict element order: every `<w:abstractNum>`
+   before every `<w:num>`, with `<w:numIdMacAtCleanup>` (if present) last.
+   Never blindly `.append()` — insert a new abstract right after the last
+   existing one; insert a new num right before `numIdMacAtCleanup` (updating
+   its `val`). Violating this is tolerated by python-docx and a same-session
+   PDF, but Word's own `Save()` will silently detect the bad order, treat
+   the whole numbering part as corrupt, and regenerate it from near-empty
+   defaults — discarding every custom numbering instance with no warning.
+3. A paragraph's `w:numPr` inside `w:pPr` has a required position:
+   immediately after `w:pStyle`, before `w:ind`/`w:rPr`. Appending it at the
+   end is the same class of bug — silently stripped on a real Word
+   round-trip.
+4. Verify with a real Word round-trip, not just a same-session PDF: (a)
+   confirm numbering elements/`numPr` via python-docx before Word touches
+   the file; (b) run the PDF export; (c) re-open the freshly-saved `.docx`
+   via python-docx and re-check the same elements. Only (c) catches Word's
+   silent post-save corruption.
+5. Don't trust a gapless top-level sequence as proof of correctness —
+   simulate the numbering counters directly against the saved `.docx`
+   (walk headings in order, track per-level counters, reset the sub-counter
+   on every new parent) and assert every child's number matches its real
+   parent, across the whole affected scope.
+6. Check for pre-existing blank heading paragraphs (a Heading style with no
+   title text) in the affected scope — these silently consume a number and
+   render as a blank numbered TOC row once the TOC refreshes. Confirm
+   they're pre-existing (usually are) and ask the user how to handle them
+   (typically demote to body text) before touching them.
+7. Check for headings with an old chapter number typed directly into the
+   title text (e.g. "4.5.2 Fund Transfer List") — confirm with the user
+   before stripping it, then automate the strip with a script rather than
+   hand-editing.
+8. If overriding a heading level's start value produces an apparent
+   off-by-one, don't chase it with a compensating hack — that's far more
+   likely the corruption in point 2 than a real property of the override.
+   Fix the corruption first, then re-test.
+9. The abstract numbering level's own `w:rPr`/`w:rFonts` controls the
+   auto-number glyph's font, independent of the heading text's own font.
+   Explicitly set `w:ascii`/`w:hAnsi` on every level in use to match the
+   document's heading font.
+10. **A `numId` of `None` or any non-numeric value is a hard,
+    unrecoverable failure invisible to every check above** — well-formed
+    XML that opens fine in python-docx, survives a same-session PDF, and
+    passes points 1–9, but Word will flatly refuse to open the file at all.
+    Guard at the source: any function setting `w:numPr` should validate
+    `numId`/`ilvl` are non-negative integers and raise immediately if not.
+    Verifying the file opens in real Word via COM is the only after-the-fact
+    check that catches this — run it first, before anything else.
+
+**Screenshot placement** — place every screenshot immediately after the step
+it supports; caption with a line explaining what to notice, unless the
+manual's confirmed existing convention is bare/uncaptioned (default to
+captioning when ambiguous or new); never place screenshots back-to-back with
+no explanatory text; include initial/populated/review/confirmation/resulting
+states, expanded dropdowns where values matter, and representative Add/
+View/Update/Delete/Submit/Approve/Reject/nested-entry screens; avoid
+repeating the same screenshot across sections (cross-reference instead);
+keep defect-only screenshots out of the manual. When inserting
+programmatically, always pass an explicit `width` (derived from an existing
+embedded screenshot's `wp:extent`, not a guessed inch value) — omitting it
+uses native pixel size at 96 DPI and overflows the page margin with no error.
+When a field's description says it opens a secondary pop-up/picker, capture
+that pop-up itself, not just the parent screen. Before delivery, audit every
+field/bullet naming a sub-screen or nested pop-up and confirm each has a
+matching screenshot.
+
+**Content separation / zero defect language (Hard Rule, expanded):** the
+manual's own prose must never contain defect/blocker language, in any
+phrasing — this shipped wrong twice before being made an absolute rule.
+Banned: "At the time of this documentation update...", "logged as a defect",
+"did not complete successfully", "could not be saved/captured", "blocked",
+or any pointer to the defect/coverage log. When a screen/action is genuinely
+blocked with no populated-result evidence, describe the *intended* behavior
+only, exactly as if it works — everything about the blocker lives solely in
+the coverage/defect log. **Exception:** a real, verified functional
+requirement that isn't obvious from the field's label (e.g. a field that
+silently requires a numeral, a default value that fails validation) is
+stated as a plain neutral fact with zero bug-framing — the test is "would
+omitting this cause a reader to hit an unexplained failure?" If yes, keep
+the bare fact. If the gap is purely cosmetic (a screen shows raw IDs instead
+of names but the reader can still complete the task), drop the sentence
+entirely. If unsure which case applies, ask. Keep the manual's prose generic
+— no hardcoded reference IDs/customer names/test-data values in written
+procedure text, even if visible in a screenshot (screenshots with real UAT
+data are fine).
+
+**Accuracy rules:** base the manual on observed/tested behavior only;
+clearly identify configuration-driven or role-dependent values; never claim
+a list is complete unless every visible static option was audited; never
+claim transaction coverage unless the action was completed and the result
+verified; keep excluded systems out until authorized; use consistent
+terminology throughout.
+
+**PDF and layout:** professional A4 layout, readable margins/headings/
+tables/lists/captions; avoid awkward page-splits of headings/figures/small
+tables; scale screenshots without distortion; keep option lists as lists,
+not dense paragraphs; generate both editable source and PDF.
+
+**Pre-delivery validation** — beyond Gate B's hand-verify list above, also
+check: no adjacent duplicate paragraphs/repeated procedure sentences
+anywhere in the changed range (not just duplicate screenshots); every
+short, title-like body paragraph in the changed range is either intentional
+prose or a correctly formatted inline lead-in; the rendered left/right text
+boundaries of every changed content type match a confirmed reference section
+(checking only a style name or only the left indent is insufficient); after
+any bulk field-description cleanup, every remaining/removed field-to-prose
+transition still has its workflow instructions, option coverage,
+validations, and outcomes intact; grep the build script itself for a
+screenshot filename passed twice into one screen's content block (e.g. as
+both "before" and "after" args to a shared helper) before ever exporting a
+PDF.
+
+**Completion criteria:** the manual is complete only when an operational
+user can follow each process without unexplained UI knowledge, every
+important choice is listed, every major action has supporting evidence, and
+the final PDF passes the full validation checklist (this section + Gate B).
 
 ## Repo-Wide Audit Trail — AUDIT-LOG.md and FLOWS-LOG.md
 
@@ -310,7 +612,7 @@ treat every one as non-negotiable, not a style preference.
   target version already exists (one row per version, not one row per
   editing session) — merge into it instead of adding a duplicate. **This
   overrides the general "every material revision must increment the
-  version" language in `User-Manual-Production-Instructions.md`** — that
+  version" language in "Manual Production Rules" below** — that
   line states the eventual goal (a shipped manual shouldn't be permanently
   mislabeled), not a standing license for the agent to decide when/whether
   a revision counts as material. The decision is always the user's.
@@ -328,14 +630,15 @@ treat every one as non-negotiable, not a style preference.
   string `"None"` (or any non-numeric numId/ilvl) is well-formed XML,
   survives every other check, and Word still refuses to open it.
 
-## Quick Reference — Scripts/
+## Quick Reference — scripts/
+
+All three live in this skill folder's `scripts/` subdirectory.
 
 | Script | Purpose |
 |---|---|
 | `build_manual_template.py` | Numbering-safe docx build helpers (headings, fields, images, OOXML numbering). Copy into the module folder — don't run as-is. |
 | `to_pdf_export.py` | Word-COM PDF export with forced TOC/field refresh; re-saves the docx with that refresh applied — always QC the file this writes, not the build script's raw output. |
 | `qc_audit.py` | Standalone pre-delivery QC: Word-open check first, duplicate-screenshot byte-hash, numbering simulation, stale-embedded-number check, `--baked-in-numbering` for documents with no live numbering (e.g. SCO). Run `--help` for flags. |
-| `fix_accounts_collateral_formatting.py` | One-off formatting-repair script from a prior round — read before reusing; likely needs adapting, not running verbatim. |
 
 ## Common Mistakes
 

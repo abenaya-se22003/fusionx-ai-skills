@@ -1,8 +1,9 @@
 # Gotchas — Environment, Session, and Subtle Content Bugs
 
 Collected across the Collateral, Accounts, Lending, SCO, Term Deposit, and
-Cash module updates. These are not restated in `README.md` or the two
-instruction docs at the repo root — read this alongside `SKILL.md`.
+Cash module updates. These are operational/environment lessons not restated
+in SKILL.md's "Coverage Standard" or "Manual Production Rules" sections —
+read this alongside `SKILL.md`.
 
 ## Finding and driving the browser
 
