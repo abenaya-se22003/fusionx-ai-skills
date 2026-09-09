@@ -602,7 +602,29 @@ screen and Verification method still describe the source, not the defect.
   unauthenticated session. Find and attach to that existing session (e.g.
   via `playwright-cli list`/`tab-list`, per `../user-manual-update/
   gotchas.md`) rather than launching a new browser instance. Source-Verifier
-  is the only role that never touches the browser at all (see below).
+  is the only role that never touches the browser at all (see below). This
+  holds across rounds within one working session too: if a second,
+  unrelated round (different module, different topic) starts later in the
+  same session, its Discovery (stage 3) navigates to the new module in the
+  same already-authenticated browser session rather than relaunching or
+  re-logging in — the session belongs to the human's login for the whole
+  working session, not to any one round.
+- When two rounds targeting different modules run back-to-back in the same
+  session against the same project, every stage still runs per round from
+  Stage 0 onward (Stage 0's file checks, Stage 2's round-type question, and
+  Stage 4's confirmation gate are never silently skipped for a later round
+  just because an earlier round in the same session already did them) — but
+  a recorded codebase-connection path from an earlier round is only reused
+  as-is if it actually covers the new module; if the new module plausibly
+  lives in a different repo, confirm this with the user rather than
+  carrying the old path forward unchecked. `AUDIT-LOG.md` and `FLOWS-LOG.md`
+  are shared across every round and module in the project (they are not
+  per-module files) — lead each `AUDIT-LOG.md` entry and each `FLOWS-LOG.md`
+  "Area" value with the module/topic it covers (e.g. "Lending —
+  Collateral Coverage Ratio: ...", Area = `Lending.CollateralCoverageRatio`
+  or an equally specific module-qualified label) so entries from different
+  modules/rounds stay distinguishable without relying on chronological
+  position alone.
 - Every dispatched role is a `general-purpose` subagent and so has full
   tool access, including `Write` — it writes its own artifacts directly
   (network-capture log, `DATA-LINEAGE.md` rows, `DEFECT-LOG.md` entries,
