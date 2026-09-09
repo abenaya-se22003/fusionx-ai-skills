@@ -129,8 +129,8 @@ sign-off) to run headless.
   note when no codebase is available).
 - Confirms the `user-manual-update` handoff's core lesson again: fresh-
   subagent validation with a hypothetical scenario found real gaps every
-  round it ran — 20 validation rounds this time, closing a critical gap where
-  source-code contradictions couldn't reach DEFECT-LOG when the functional
+  round it ran — 20 validation rounds this time, closing a significant gap where
+  source-code contradictions couldn't reach `DEFECT-LOG.md` when the functional
   Verifier had already returned CONFIRMED for that same row.
 - New pattern this skill adds: a single subagent role can be reused across
   multiple "modes" (round types A/B/C here) by keeping the role's prompt

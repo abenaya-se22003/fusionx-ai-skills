@@ -37,7 +37,12 @@ Do not import that tool's read-only restriction here.
    already learned (Ant Design virtualization specifics, sticky-header
    click interception, slow-confirm screens with no progress indicator).
 3. `gotchas.md` (this folder) — functional-testing-specific lessons.
-4. The Templates section below. If the `fusionx-test-agent-v0.1.1` repo
+4. `docs/evidence-and-bug-policy.md` (from `fusionx-test-agent-v0.1.1`, if that
+   repo is checked out) — evidence-minimization rules: mask/omit credentials
+   and auth data, store the minimum necessary. The Bug Report template's
+   Evidence section and the global Playwright instructions already operationalize
+   this; read the policy doc for the fuller rationale if available.
+5. The Templates section below. If the `fusionx-test-agent-v0.1.1` repo
    happens to be checked out in the current project, its `templates/`
    directory has the canonical originals these were adapted from
    (`test-plan.md`, `bug-report.md`, `coverage-report.md`,
@@ -401,7 +406,7 @@ narration in user-facing deliverables.
 
 ### 8. Source-Verifier dispatch
 
-Skip entirely if Intake (stage 0) recorded no codebase connection — note
+Skip entirely if the standing-state check (stage 0) recorded no codebase connection — note
 the skip in the round's report at stage 10, don't just drop it quietly.
 
 If a codebase is configured, dispatch one fresh `Agent` tool call (with
