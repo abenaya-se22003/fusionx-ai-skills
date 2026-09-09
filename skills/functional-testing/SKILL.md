@@ -158,6 +158,18 @@ needs to flag and what the Executor needs to capture.
   defer or replace the full-depth pass the global instructions require.
   Actually chasing down the source screen is Traceability's job (stage 6),
   not Discovery's.
+- A numeric or validated field whose actual expected value or rule changes
+  depending on a selectable value elsewhere on the form (e.g. a fee
+  calculation whose rounding convention differs by currency, or a threshold
+  that differs by product type) is subject to the same per-value branch
+  testing the inherited Coverage Standard already requires for any dropdown
+  or selector: draft one Test Plan row per value that changes the rule
+  (e.g. one row per currency), not one row that picks a single
+  representative value and calls the field covered. This isn't new scope —
+  it's the existing "select every value that changes validation/behavior"
+  rule from the global instructions applied to a field whose branching
+  driver happens to be a currency/product selector rather than the field's
+  own dropdown.
 - Check `DATA-LINEAGE.md` for each flagged candidate. "Already mapped" means
   that exact `Module.Screen.Field` has its own existing row — a different
   field is its own row and starts as `[discover]` even if you suspect it

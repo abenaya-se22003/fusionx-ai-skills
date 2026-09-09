@@ -35,6 +35,19 @@ block the narrow pass's completion on the broader pass also finishing —
 they're allowed to be reported as two separate rounds, and the narrow one
 being done is real progress even if the broad one isn't started yet.
 
+## Numeric validation rules need boundary-value testing, not just one example
+
+When a field enforces a numeric rule with a rounding, threshold, or
+percentage-of-another-field component (a minimum below which the value is
+rejected, a fee calculated as a percentage and rounded to the nearest
+currency unit), test values at and immediately either side of the actual
+boundary — not just one clearly-valid and one clearly-invalid value.
+Rounding-convention differences (round-half-up vs. banker's rounding) and
+off-by-one threshold bugs only surface exactly at the edge (e.g. a value
+that rounds differently depending on convention, or a value one currency
+unit inside vs. outside a threshold); a test plan that only exercises one
+comfortably-passing and one comfortably-failing value will miss them.
+
 ## Network capture stays action-correlated
 
 When Executor records raw network requests/responses, tag each captured
