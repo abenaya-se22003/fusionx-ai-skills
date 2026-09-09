@@ -446,7 +446,23 @@ to authorize. Dispatch one fresh `Agent` tool call. The prompt must include:
   retry it with at least one different input combination (e.g. a different
   record or product than the one Verifier used — the point is to rule out
   a record-specific quirk, not to repeat the identical case) or a fresh
-  session/login. Retry once; if you still can't reproduce it after that one
+  session/login. If the retry produces a DIFFERENT failure symptom than the
+  original (e.g. the original showed a 0% penalty, the retry on different
+  data shows a 5% penalty instead of the expected 2%), that counts as 'not
+  reproduced' for the original symptom's Reproducibility field — record it
+  as such — and the new symptom is itself a separate finding, never folded
+  silently into the original or dropped. Default to writing it up as its
+  own Bug Report entry with its own classification and severity, on the
+  assumption it's a distinct defect until shown otherwise; only combine it
+  into the original row's single entry if your own root-cause investigation
+  (or Source-Verifier's, if you can get a fresh dispatch for the new
+  symptom and a codebase connection is configured) actually traces both
+  symptoms to the same code path or condition. A new symptom discovered
+  this way gets the same Source-Verifier treatment stage 8 would have given
+  it had it been known then — request a fresh Source-Verifier dispatch for
+  it before finalizing its classification if a codebase connection is
+  configured, the same as for any other rejected case. Retry the original
+  symptom once; if you still can't reproduce it after that one
   retry, don't keep retrying indefinitely — record the attempt count and
   outcome in 'Reproducibility' as-is (e.g. 'reproduced on 1 of 2 attempts')
   and classify accordingly (a failure that won't reproduce on different
