@@ -268,7 +268,19 @@ include:
   refuted by Source-Verifier in stage 8 if a codebase connection exists.
   Only use `UNCONFIRMED` when you simply haven't been able to locate the
   source yet and more digging might still find it — do not silently drop
-  either kind of entry or mark it resolved when it isn't."
+  either kind of entry or mark it resolved when it isn't. Trace exactly one
+  hop per `DATA-LINEAGE.md` row: confirm the immediate source screen for
+  the field you were given, and stop there for that row. If, while
+  confirming it, you notice the source screen's own value is itself
+  populated from yet another screen (a second hop), don't chase the chain
+  inside the same row — add a second, separate `DATA-LINEAGE.md` row for
+  that intermediate screen's own field (e.g. `CommonModule.RiskCategoryMaster.ActiveStatuses`),
+  starting as `[discover]` the same as any newly-flagged candidate, so the
+  chain is represented as multiple one-hop rows linked by matching
+  `Module.Screen.Field` values rather than one row trying to hold multiple
+  hops. Confirm that second row this round if time allows; otherwise flag
+  it in the round's report as a follow-up `[discover]` row for next round,
+  the same way any other time-boxed deferral is recorded."
 
 ### 7. Verifier dispatch
 
@@ -613,6 +625,13 @@ confirm a source at all, still add the row rather than omitting it: set
 didn't resolve>` and "Verification method" to `unconfirmed`. "First
 confirmed" and "Last reconfirmed" are calendar dates in `YYYY-MM-DD`
 format.
+
+Each row is a single hop: `Source/config screen` names the immediate
+source of `Module.Screen.Field`, nothing further upstream. A chain (the
+source screen's own value is itself populated from a further screen) is
+represented as a second row for that intermediate field, not as extra
+columns on the first row — see Stage 6's instruction for when Traceability
+adds that second row.
 
 `DATA-LINEAGE.md` tracks where a value's source of truth lives, not
 whether the app currently implements it correctly — a row's content
