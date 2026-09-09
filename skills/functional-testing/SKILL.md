@@ -140,7 +140,10 @@ needs to flag and what the Executor needs to capture.
   instructions' Transaction Testing section for why both matter).
 - Explicitly flag any planned step that is destructive/irreversible with no
   disposable UAT record available — these become pause points for the
-  Executor, not silent skips.
+  Executor, not silent skips. Flag it in the plan header's
+  "Destructive/irreversible steps flagged" field by row ID (e.g. "Row 5 —
+  Delete approved Term Deposit — no disposable record available"); the
+  Test Plan table itself has no separate column for this.
 
 ### 4. Confirmation gate
 
@@ -162,6 +165,10 @@ Dispatch one fresh `Agent` tool call, `subagent_type: "general-purpose"`,
   disposable UAT data where authorized — this is not a read-only pass.
 - The Dropdowns and Selectable Controls, Search and Filtering, and Evidence
   Capture rules from the global instructions.
+- This skill's own Error Handling section (below) — in particular: never
+  click a destructive control merely to inspect it without a disposable
+  record; stop at the confirmation dialog (it's fine to open it and
+  screenshot it) rather than confirming the destructive action itself.
 - This explicit instruction: "Record raw network requests/responses for
   every action you perform, tagged with the action that triggered them, in
   a network-capture log file named `NETWORK-CAPTURE-<round-id>.md` at the
@@ -176,7 +183,13 @@ Dispatch one fresh `Agent` tool call, `subagent_type: "general-purpose"`,
 - This explicit instruction: "If you reach a destructive/irreversible
   action with no disposable UAT record available, or a genuinely ambiguous
   step the plan doesn't resolve, stop and report back rather than deciding
-  either way yourself."
+  either way yourself." When Executor reports back on one of these, the
+  main thread applies the Error Handling section's escalation rule: tell
+  the user and ask whether to keep investigating (e.g. authorize the action
+  anyway, or source a disposable record) or stop and document the row as
+  Blocked as-is. Never resume Executor with a unilateral decision, and never
+  treat "reported back" as itself a completed row — it stays open until the
+  user's answer resolves it one way or the other.
 
 Expected output: one evidence-backed result per plan row (not bare
 pass/fail — a screenshot/state reference and what was actually observed),
@@ -232,11 +245,18 @@ Executor or Traceability — it must not see their claimed results, only:
   means an independently produced result, not a re-read of Executor's
   artifact. If this round included traceability, independently re-confirm
   every `DATA-LINEAGE.md` row in scope this round the same way —
-  re-navigate to the claimed source screen yourself. Return CONFIRMED,
-  REJECTED, or BLOCKED per row, each with its own fresh evidence — BLOCKED
-  is for when the row's precondition or environment genuinely prevents
-  execution (missing data, screen unreachable), not for when the observed
-  behavior simply fails to match expectation, which is REJECTED."
+  re-navigate to the claimed source screen yourself. For a row flagged in
+  the plan header as destructive/irreversible with no disposable UAT record
+  available, do not attempt the destructive action yourself either — that
+  flag applies to you the same as it applied to Executor. Instead confirm
+  the record is still unchanged and that Executor's stop was genuine (not a
+  fabricated 'blocked' claim covering for work not actually attempted), then
+  return BLOCKED for that row. Return CONFIRMED, REJECTED, or BLOCKED per
+  row, each with its own fresh evidence — BLOCKED is for when the row's
+  precondition or environment genuinely prevents execution (missing data,
+  screen unreachable, a flagged destructive step with no disposable record),
+  not for when the observed behavior simply fails to match expectation,
+  which is REJECTED."
 
 If Verifier's evidence contradicts Executor's or Traceability's claim, the
 Verifier's independently-derived result is what's recorded — flag the
@@ -351,11 +371,15 @@ lineage gap. Dispatch one fresh `Agent` tool call. The prompt must include:
   Source-Verifier ran this round, ran but couldn't locate a root cause, or
   was skipped for lack of a codebase connection; and whether Defect-Triage
   ran or was skipped because Verifier returned no REJECTED/BLOCKED row or
-  lineage gap — never leave any of these ambiguous. For each defect raised,
-  if Source-Verifier didn't run or found nothing, say so directly in the
-  same field rather than leaving it blank (e.g. "source file:line not
-  available — no codebase connection configured" or "not located in
-  code").
+  lineage gap — never leave any of these ambiguous. State explicitly which
+  rows, if any, were Blocked because they were destructive/irreversible with
+  no disposable record available — this is a legitimate closed outcome (see
+  "Coverage closure result" below), not a silently dropped case, unless a
+  disposable record later becomes available and the row is re-planned. For
+  each defect raised, if Source-Verifier didn't run or found nothing, say so
+  directly in the same field rather than leaving it blank (e.g. "source
+  file:line not available — no codebase connection configured" or "not
+  located in code").
 - Update `FLOWS-LOG.md`'s coverage table using the Coverage Report template
   shape below.
 - Append one `AUDIT-LOG.md` entry: what was checked this round, what was
@@ -453,7 +477,14 @@ or failures, e.g. "12/12 planned rows closed" or "2 of 12 rows still
 Blocked pending UAT data." A row with Status `Fail` that has since had a
 Bug Report written for it in `DEFECT-LOG.md` still counts as closed — it
 reached a final Status and was root-caused; only a row still awaiting
-retry, triage, or missing data stays open.
+retry, triage, or missing data stays open. Likewise, a row with Status
+`Blocked` because it's destructive/irreversible with no disposable UAT
+record available counts as closed once the user has confirmed stopping
+there (per stage 5's escalation) — the Coverage Standard's requirement to
+exercise delete/destructive actions doesn't override the global
+instructions' rule against mutating real data with no disposable record;
+it stays a permanent, legitimate exception, not an open item, unless a
+disposable record later becomes available.
 
 ### Data Lineage row shape (`DATA-LINEAGE.md`)
 
