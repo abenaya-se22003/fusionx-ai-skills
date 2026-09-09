@@ -192,7 +192,18 @@ needs to flag and what the Executor needs to capture.
 
 Present the drafted plan file to the user. Do not proceed until they
 explicitly approve it. If they push back, revise and re-present — never
-narrow scope silently and continue as if it were approved.
+narrow scope silently and continue as if it were approved. "Revise" means
+editing the same `FUNCTIONAL-TEST-PLAN-<topic>.md` file in place (patch
+only the rows/fields the feedback actually addresses; don't regenerate
+rows the user didn't object to, and don't keep the rejected version as a
+separate file — the log entry made at Stage 10 will reference the plan as
+it stood when finally approved, not its rejected drafts). If the feedback
+names coverage that wasn't part of the original plan (a new scenario, a
+different record type, a missed variant), that's a real scope addition —
+go back to Stage 3 and actually navigate that flow live before drafting
+its row, the same Coverage Standard bar as the original pass; don't draft
+a new row purely from the user's description without Discovery having
+looked at it.
 
 ### 5. Executor dispatch
 
