@@ -474,12 +474,13 @@ before.
   rejection (its entry in `VERIFIER-FINDINGS-<round-id>.md`), and the
   relevant slice of Executor's network-capture log so Source-Verifier has
   the actual test context (what was tested, with what data, and what the
-  app actually returned), not just a bare pass/fail claim. Prompt: "Given this failing case (what was expected, what was
-  actually observed), find the code path responsible and identify the
-  precise cause — not just 'it fails' but the actual faulty condition,
-  missing check, or incorrect value in the code. Report file/line
-  references. If you cannot locate the responsible code, say so plainly
-  rather than guessing." Source-Verifier does static analysis only — it has
+  app actually returned), not just a bare pass/fail claim. Prompt:
+  "Given this failing case (what was expected, what was actually observed),
+  find the code path responsible and identify the precise cause — not just
+  'it fails' but the actual faulty condition, missing check, or incorrect
+  value in the code. Report file/line references. If you cannot locate the
+  responsible code, say so plainly rather than guessing." Source-Verifier
+  does static analysis only — it has
   no browser access and cannot retry the scenario live; that's
   Defect-Triage's job in stage 9. If the same field also has a
   `DATA-LINEAGE.md` row in scope this round, one combined dispatch covering
@@ -588,12 +589,16 @@ to authorize. Dispatch one fresh `Agent` tool call. The prompt must include:
   thought X" — that belongs in AUDIT-LOG.md). State plainly whether
   Source-Verifier ran this round, ran but couldn't locate a root cause, or
   was skipped for lack of a codebase connection; and whether Defect-Triage
-  ran or was skipped because Verifier returned no REJECTED/BLOCKED row or
-  lineage gap — never leave any of these ambiguous. State explicitly which
-  rows, if any, were Blocked because they were destructive/irreversible with
-  no disposable record available — this is a legitimate closed outcome (see
-  "Coverage closure result" below), not a silently dropped case, unless a
-  disposable record later becomes available and the row is re-planned. For
+  ran or was skipped. For Defect-Triage skips, distinguish between: no
+  REJECTED/BLOCKED rows and no unconfirmed lineage gaps or
+  Source-Verifier-flagged contradictions (normal dispatch-skip), versus a
+  destructive BLOCKED row the user already resolved at Stage 5 escalation
+  (direct-to-Reporting exception; see Stage 9 for the full trigger
+  conditions). State explicitly which rows, if any, were Blocked because
+  they were destructive/irreversible with no disposable record available —
+  this is a legitimate closed outcome (see "Coverage closure result" below),
+  not a silently dropped case, unless a disposable record later becomes
+  available and the row is re-planned. For
   each defect raised, if Source-Verifier didn't run or found nothing, say so
   directly in the same field rather than leaving it blank (e.g. "source
   file:line not available — no codebase connection configured" or "not
@@ -788,8 +793,8 @@ screen and Verification method still describe the source, not the defect.
   unauthenticated session. Find and attach to that existing session (e.g.
   via `playwright-cli list`/`tab-list`, per `../user-manual-update/
   gotchas.md`) rather than launching a new browser instance. Source-Verifier
-  is the only role that never touches the browser at all (see below). This
-  rule covers the default single-role case. A row that structurally
+  is the only role that never touches the browser at all (see below).
+- This rule covers the default single-role case. A row that structurally
   requires a second, different authenticated identity to complete (e.g. a
   maker-checker approval step where the app enforces that the submitter
   cannot also approve) is a genuinely ambiguous step this rule doesn't
@@ -800,10 +805,11 @@ screen and Verification method still describe the source, not the defect.
   same dispatch to resume against. Label which step needs which role
   directly in the Scenario cell (e.g. "As Maker: submit. As Checker:
   approve.") since the Test Plan table has no separate role column.
-  Verifier's independent re-check of such a row is subject to the same
+- Verifier's independent re-check of such a row is subject to the same
   escalation the first time it needs the second identity — it is not
   expected to authenticate as a second user unassisted any more than
-  Executor was. This holds across rounds within one working session too: if a second,
+  Executor was.
+- This holds across rounds within one working session too: if a second,
   unrelated round (different module, different topic) starts later in the
   same session, its Discovery (stage 3) navigates to the new module in the
   same already-authenticated browser session rather than relaunching or
@@ -816,23 +822,23 @@ screen and Verification method still describe the source, not the defect.
   rule) must have the dispatched role explicitly (re)select that language
   itself before acting, rather than trusting whatever the shared session
   currently happens to have set — silently inheriting the wrong language
-  produces a false Pass or false Fail that looks like a normal result. This
-  assumes a continuous working
-  session; it does not extend across a genuine multi-day gap forced by a
-  scheduled/external event a row's precondition depends on (see stages 5 and
-  7). When a stage resumes hours or days after the browser session was
-  established, treat the old session as presumptively expired rather than
-  assuming it survived — ask the human to re-authenticate before that
-  stage's dispatch runs, rather than discovering the session is dead
-  mid-dispatch. The round-id and every artifact filename stay the same
-  across this gap (the round hasn't restarted, it's only paused); only the
-  browser authentication is re-established. If the disposable record a
-  prior stage created is no longer reachable or usable when a later stage
-  resumes (auto-closed, archived, expired by the app's own lifecycle
-  rules), treat that the same as any other unmet precondition — report it
-  back rather than silently recreating or assuming, and let the user decide
-  whether to recreate the prerequisite sequence fresh or document the row
-  as Blocked.
+  produces a false Pass or false Fail that looks like a normal result.
+- This assumes a continuous working session; it does not extend across a
+  genuine multi-day gap forced by a scheduled/external event a row's
+  precondition depends on (see stages 5 and 7). When a stage resumes hours
+  or days after the browser session was established, treat the old session
+  as presumptively expired rather than assuming it survived — ask the human
+  to re-authenticate before that stage's dispatch runs, rather than
+  discovering the session is dead mid-dispatch. The round-id and every
+  artifact filename stay the same across this gap (the round hasn't
+  restarted, it's only paused); only the browser authentication is
+  re-established.
+- If the disposable record a prior stage created is no longer reachable or
+  usable when a later stage resumes (auto-closed, archived, expired by the
+  app's own lifecycle rules), treat that the same as any other unmet
+  precondition — report it back rather than silently recreating or assuming,
+  and let the user decide whether to recreate the prerequisite sequence
+  fresh or document the row as Blocked.
 - When two rounds targeting different modules run back-to-back in the same
   session against the same project, every stage still runs per round from
   Stage 0 onward (Stage 0's file checks, Stage 2's round-type question, and
