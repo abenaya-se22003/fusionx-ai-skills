@@ -55,9 +55,11 @@ it caused real, repeat-costing gaps in prior sessions.
 At the target project root, read `AUDIT-LOG.md`, `FLOWS-LOG.md`,
 `DEFECT-LOG.md`, and `DATA-LINEAGE.md` if they exist — don't re-derive from
 scratch what a prior round already established. If any are missing, create
-them now with a minimal header (title + "no entries yet") rather than
-waiting until the Reporting stage — an empty file that exists is easier to
-append to correctly than one whose absence gets missed later.
+them now with a minimal header rather than waiting until the Reporting
+stage — an empty file that exists is easier to append to correctly than one
+whose absence gets missed later. The minimal header is literally:
+`# <Filename, e.g. Audit Log>` followed by a blank line and `No entries
+yet.` — identical shape for all four files, only the title line changes.
 
 Also ask (or check a prior round's plan header for the answer already on
 record): is a codebase connection configured for this target — a local
@@ -69,7 +71,10 @@ is what "checking" means here. If yes, record the path
 in this round's plan header and the Source-Verifier stage (8) runs. If no,
 record "Source-Verifier: not available — no codebase connection configured"
 in the plan header and skip stage 8 later — note the skip explicitly in the
-round's report too, never silently.
+round's report too, never silently. The Test Plan template's header has a
+"Codebase connection" field for exactly this (same value shape as the Run
+Summary template's field of the same name) — that's where this gets
+recorded; it is not a separate file or a new artifact.
 
 ### 1. Intake
 
@@ -78,6 +83,18 @@ or any other source document. If none is given, or the request is ad hoc
 ("test the X screen"), ask the user directly what needs covering before
 doing anything else — module, screens/flows, specific business rules, and
 any known risk areas. Don't guess scope from a screen name.
+
+If the user's answer stays non-specific even after being asked (e.g. "just
+test it thoroughly, whatever you think is important" with no named field,
+rule, or ticket), that is not a blocker to proceed past — it means no
+specific change exists to narrow against, so the "specific change" branch
+below does not apply and the global Playwright instructions' full-depth
+default applies unmodified: Discovery covers the full Coverage Standard
+across every screen/flow in the named module from the start, not a
+progressively-expanding subset. Record the Test Plan's "Requirement/source"
+field as the plain fact of what was given, e.g. "Ad hoc verbal request —
+no ticket/spec: 'test the Savings module thoroughly'" — never leave it
+blank or invent a ticket number that doesn't exist.
 
 If the source names a **specific change** (a ticket describing one new
 field, one modified validation rule, etc.), scope Discovery's first pass to
@@ -452,6 +469,7 @@ stage 8). Dispatch one fresh `Agent` tool call. The prompt must include:
 - Roles/browsers:
 - Scope and exclusions:
 - Round type: A / B / C
+- Codebase connection: [path, or "not configured — Source-Verifier skipped"]
 - Safety authorization:
 - Data strategy: (new records created this round vs. existing UAT records reused)
 - Destructive/irreversible steps flagged: (list, or "none")
