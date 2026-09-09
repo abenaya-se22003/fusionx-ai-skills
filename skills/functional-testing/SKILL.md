@@ -343,7 +343,13 @@ Executor or Traceability — it must not see their claimed results, only:
   disposable record and execute the row's steps against it — don't ask for
   or rely on the specific record Executor created; an independent check
   means an independently produced result, not a re-read of Executor's
-  artifact. If this round included traceability, independently re-confirm
+  artifact. Where the row instead uses an existing shared UAT record, confirm
+  it's actually in the precondition state the plan describes before acting
+  on it — a shared record can drift between Executor's pass and yours for
+  reasons outside this round (see the Error Handling section's shared-record
+  check); if it isn't in the expected state, that's an environment finding
+  to report, not something to silently proceed past or assume Executor
+  caused. If this round included traceability, independently re-confirm
   every `DATA-LINEAGE.md` row in scope this round the same way —
   re-navigate to the claimed source screen yourself. For a row flagged in
   the plan header as destructive/irreversible with no disposable UAT record
@@ -511,7 +517,13 @@ to authorize. Dispatch one fresh `Agent` tool call. The prompt must include:
   request/response and, if provided, the Source-Verifier finding — not
   just what the UI shows. Classify each confirmed defect using exactly one
   of: ApplicationDefect, SuspectedDefect, AutomationIssue, EnvironmentIssue,
-  TestDataIssue, ExpectedBehaviour, NeedsBusinessReview — if it's genuinely
+  TestDataIssue, ExpectedBehaviour, NeedsBusinessReview — a failure that
+  traces to a shared UAT record having been externally modified by someone
+  outside this round (confirmed via the audit-trail/last-modified check the
+  Error Handling section requires for shared-record rows, not merely a
+  differing retry result) classifies as EnvironmentIssue: the app behaved
+  correctly against the state it was actually given, the state itself was
+  the problem. If it's genuinely
   unclear whether an observed behavior is a defect or intended design, that
   uncertainty is itself what NeedsBusinessReview is for; don't guess, and
   don't stop to ask the user to make this classification call for you (that
@@ -797,6 +809,22 @@ screen and Verification method still describe the source, not the defect.
 - Root-cause a blocked/no-data result via the actual network request/
   response before logging it as a defect — don't accept "no data" at face
   value.
+- When a row uses an existing shared UAT record (not one created fresh this
+  round) and its state doesn't match what the plan's steps or Executor's own
+  actions account for, don't assume it's an application defect by default —
+  a shared record can be modified by someone outside this round entirely
+  (another tester, another session, in the same live UAT environment). Check
+  the record's audit trail/last-modified-by field or history screen, if the
+  app has one, for a change not attributable to this round's own actions
+  before concluding the app is at fault. If an external modification is
+  confirmed, that's environment contamination, not a finding about the
+  application: note it plainly in `AUDIT-LOG.md` (it doesn't fit the
+  gap-closed/correction/out-of-scope categories cleanly — record it as its
+  own plain fact, e.g. "record X's status was changed by an unrelated
+  session between steps 3 and 4; re-run against a clean state"), and re-run
+  the affected row once the record is back to a known-good state (or against
+  a fresh disposable record if one is available and the row's data-strategy
+  allows it) rather than logging the contaminated observation as a defect.
 - Resolve ambiguity before the Stage 4 confirmation gate, not mid-execution.
 - When a blocker or gap is found, tell the user and ask whether to keep
   investigating or stop and document it as-is — never decide silently
