@@ -124,11 +124,20 @@ needs to flag and what the Executor needs to capture.
   defer or replace the full-depth pass the global instructions require.
   Actually chasing down the source screen is Traceability's job (stage 6),
   not Discovery's.
-- Check `DATA-LINEAGE.md` for each flagged candidate. If already mapped,
-  mark it "reconfirm" rather than "discover" in the plan — don't rediscover
-  a dependency already on record. The Test Plan template has no separate
-  column for this — record it as a `[discover]` or `[reconfirm]` prefix on
-  the row's Scenario cell.
+- Check `DATA-LINEAGE.md` for each flagged candidate. "Already mapped" means
+  that exact `Module.Screen.Field` has its own existing row — a different
+  field is its own row and starts as `[discover]` even if you suspect it
+  shares a source with an already-mapped sibling field (e.g. two dropdowns
+  on the same form); don't inherit one field's row for another, let
+  Traceability confirm each field's actual source empirically. If already
+  mapped, mark it "reconfirm" rather than "discover" in the plan — don't
+  rediscover a dependency already on record. The Test Plan template has no
+  separate column for this — record it as a `[discover]` or `[reconfirm]`
+  prefix on the row's Scenario cell. Both `[discover]` and `[reconfirm]`
+  rows are members of the flagged-candidate list carried into stage 6 for
+  round type C — "reconfirm" doesn't mean "exclude from tracing," it means
+  "trace it again against the known source" rather than starting from
+  scratch.
 - Draft the round's plan using the Test Plan template below and save it as
   `FUNCTIONAL-TEST-PLAN-<topic>.md` at the target project root (not in this
   skill repo). `<topic>` is a short kebab-case label for the module/feature
@@ -213,14 +222,19 @@ include:
   it directly — don't infer the source from the endpoint name alone.
   Update `DATA-LINEAGE.md` at the project root (see the Data Lineage
   template below for the exact row format): add a new row, or refresh the
-  'Last reconfirmed' date on an existing one. If you looked and found no
-  admin/config screen at all — the value is hardcoded, computed, or served
-  by an external system with nothing to navigate to — that is itself a
-  confirmed finding: record the source screen as `hardcoded — no config
-  screen found` (or the equivalent), not as unconfirmed. Only use
-  `UNCONFIRMED` when you simply haven't been able to locate the source yet
-  and more digging might still find it — do not silently drop either kind
-  of entry or mark it resolved when it isn't."
+  'Last reconfirmed' date on an existing one — but only after you've
+  actually re-navigated to the source screen and re-checked it this round;
+  never bump the date without having actually rechecked it. If you looked
+  and found no admin/config screen at all in the UI/API — the value appears
+  hardcoded, computed, or served by an external system with nothing to
+  navigate to — that is itself a confirmed finding at the UI level: record
+  the source screen as `no config screen found in UI (suspected hardcoded)`
+  (or the equivalent), not as unconfirmed. You don't have codebase access,
+  so don't claim it's definitely hardcoded in code — that's confirmed or
+  refuted by Source-Verifier in stage 8 if a codebase connection exists.
+  Only use `UNCONFIRMED` when you simply haven't been able to locate the
+  source yet and more digging might still find it — do not silently drop
+  either kind of entry or mark it resolved when it isn't."
 
 ### 7. Verifier dispatch
 
@@ -276,7 +290,19 @@ backend/config service live in separate repos and the user has given you
 more than one path, record each in the plan header and point Source-Verifier
 at whichever repo actually contains the relevant module — or grant access to
 all configured paths if the boundary isn't obvious and let it search across
-them.
+them. If the recorded path turns out not to exist or isn't readable when
+Source-Verifier actually tries it, that's a genuine blocker, not a silent
+skip — apply the Error Handling section's escalation rule (tell the user;
+don't fabricate a finding or quietly treat the round as if no codebase were
+configured).
+
+A `DATA-LINEAGE.md` row that a prior round already verified as "source code
+(file:line)" and that Traceability reconfirmed this round with no change to
+the claimed source doesn't need Source-Verifier to redo the same code check
+— carry the prior "source code" verification forward. Only dispatch
+Source-Verifier again for a reconfirmed row if Traceability's reconfirm
+this round actually found something different from what was on record
+before.
 
 - Every `DATA-LINEAGE.md` row Traceability added or reconfirmed this round
   with a confirmed source (round types B/C only) — skip any row Traceability
@@ -313,20 +339,32 @@ them.
   both questions (lineage confirmation and failure root-cause) is fine —
   no need for two redundant dispatches against the same code area.
 
-Source-Verifier's output feeds into stage 9 (Defect-Triage, for rejected
-rows) and stage 10 (Reporting, for `DATA-LINEAGE.md`'s "Verification
-method" column, which should say "source code" rather than only "UI/API
-observation" wherever Source-Verifier ran).
+Source-Verifier updates `DATA-LINEAGE.md`'s "Verification method" column
+itself (it has the same write access as every other dispatched role, per
+the Subagent Dispatch Rules) — set it to `source code (file:line)` rather
+than leaving it at `UI/API observation` for whichever rows it cross-checked
+against the implementation. Stage 10 (Reporting) summarizes this in the Run
+Summary; it does not independently re-edit `DATA-LINEAGE.md`. Source-Verifier's
+output also feeds into stage 9 (Defect-Triage): as well as rejected rows,
+dispatch Defect-Triage for any `DATA-LINEAGE.md` row Source-Verifier flagged
+as contradicting the UI-observed behavior (e.g. a hardcoded value that
+coincidentally matches today's config) — this is a real finding even when
+Verifier returned CONFIRMED for the corresponding functional row, since the
+UI behavior looked correct today but the underlying implementation is wrong.
 
 ### 9. Defect-Triage dispatch
 
-Only if Verifier returned any REJECTED or BLOCKED row, or an unconfirmed
-lineage gap. Dispatch one fresh `Agent` tool call. The prompt must include:
+Only if Verifier returned any REJECTED or BLOCKED row, an unconfirmed
+lineage gap, or Source-Verifier flagged a `DATA-LINEAGE.md` row as
+contradicting the UI-observed behavior (this last case applies even if
+Verifier returned CONFIRMED for the corresponding functional row — see
+stage 8). Dispatch one fresh `Agent` tool call. The prompt must include:
 
-- Every REJECTED/BLOCKED row and lineage gap, with Verifier's evidence and
-  the relevant slice of the network-capture log (Defect-Triage needs the
-  actual request/response, not just Verifier's narrative, to root-cause
-  before treating anything as reproducible).
+- Every REJECTED/BLOCKED row, lineage gap, and Source-Verifier-flagged
+  contradiction, with Verifier's evidence and the relevant slice of the
+  network-capture log (Defect-Triage needs the actual request/response, not
+  just Verifier's narrative, to root-cause before treating anything as
+  reproducible).
 - Source-Verifier's file/line root-cause findings for that row, if stage 8
   ran and produced one — include it verbatim so Defect-Triage doesn't have
   to re-derive what's already been found; Defect-Triage's job on top of it
