@@ -139,11 +139,23 @@ If the request is to verify whether a previously logged defect is actually
 fixed (the user names a specific `DEFECT-LOG.md` entry, or a ticket says
 something like "verify fix for X"), treat this as a retest: draft one Test
 Plan row per referenced entry, Scenario cell prefixed `[retest: <Bug Report
-Summary or entry identifier>]`, and use that entry's own Reproduction steps
+Summary or entry identifier>]` — the "entry identifier" is simply the exact
+`# [Summary]` heading text of the entry being retested, since that heading
+is the only handle `DEFECT-LOG.md` provides; there is no separate ID scheme
+to invent. If the named entry can't actually be found in `DEFECT-LOG.md`,
+that's the same unresolved-ambiguity case as Stage 1's no-source-document
+handling above — escalate to the user for the correct entry rather than
+guessing which one was meant or silently treating the round as a fresh
+defect search. Use that entry's own Reproduction steps
 and Expected result as the row's Steps/Expected — Discovery (stage 3) still
 confirms the screen/flow is actually reachable before finalizing the row
 (per the selector-drift gotcha, a UI release since the original defect was
-logged may have moved things), but does not need to rediscover the scenario
+logged may have moved things). If the live path has genuinely moved,
+update the row's Steps to the current path rather than copying the stale
+one verbatim, and note the change (e.g. "field moved from Tab A to Tab B
+since original defect") — this is the same selector-drift correction
+`gotchas.md` already describes for `DATA-LINEAGE.md` rows, applied here to
+a Test Plan row instead. This does not need to rediscover the scenario
 from scratch. If the user asks to retest every open, claimed-fixed, or
 still-failing defect for a module rather than naming one (i.e. every entry
 that isn't already `Retested — resolved` or `Won't fix`), draft one row per
@@ -433,7 +445,14 @@ screen, no screen at all where Traceability claimed one, or a screen found
 where Traceability claimed none ("suspected hardcoded") — Verifier writes
 its own finding directly into that row's Source/config screen and
 Verification method fields, superseding Traceability's claim, the same way
-Verifier's result already supersedes Executor's for a functional row. The
+Verifier's result already supersedes Executor's for a functional row. When
+Verifier's correction is itself a "no config screen found" finding, record
+it using the exact same phrasing Stage 6 already defines for Traceability's
+version of this finding-shape (`no config screen found in UI (suspected
+hardcoded)`) and set Verification method to `UI/API observation` — the same
+as any other Traceability/Verifier-only finding not yet cross-checked
+against code; this is a confirmed UI-level finding, not `UNCONFIRMED`, the
+same distinction Stage 6 already draws. The
 discrepancy itself still goes into the round's `AUDIT-LOG.md` entry per the
 paragraph above. Stage 8 (Source-Verifier) always reads whatever
 `DATA-LINEAGE.md` currently says at the time it runs — since this
@@ -496,13 +515,23 @@ found something different from what was on record before, or Stage 7
 rule. A Stage 7 correction always invalidates any carry-forward for that
 row, even if Traceability itself reported no change — Traceability and
 Verifier can disagree about the same row in the same round, and it's
-Verifier's version that's current once stage 7 has run.
+Verifier's version that's current once stage 7 has run. This carry-forward
+optimization is about whether Source-Verifier re-checks a *data-lineage*
+source claim — it has nothing to do with whether a `[retest]` row (Stage 1)
+counts as fixed. A retest's Pass/Fail always comes from Verifier's own
+independent functional re-check at stage 7, never from a carried-forward
+Source-Verifier result; there is no "skip re-verifying because nothing
+changed" shortcut for a retest's actual functional outcome.
 
 - Every `DATA-LINEAGE.md` row Traceability added or reconfirmed this round
   with a confirmed source (round types B/C only) — skip any row Traceability
   recorded as `UNCONFIRMED`; there's no claimed source yet for Source-Verifier
   to check code against, and that stays open as a Traceability gap, not a
-  Source-Verifier task. Prompt: "Given this claimed data source (module,
+  Source-Verifier task. A row Stage 7 corrected to
+  `no config screen found in UI (suspected hardcoded)` counts as a
+  confirmed source for this purpose the same as any of Traceability's own
+  findings of that shape (per Stage 7's note above) — it is not treated as
+  `UNCONFIRMED` and is not a separate third input set. Prompt: "Given this claimed data source (module,
   screen, API endpoint, and the config/settings screen currently recorded
   in the row — this may be Traceability's original finding or a later
   Stage 7 correction; use whichever is currently on record), find the
@@ -548,6 +577,12 @@ as contradicting the UI-observed behavior (e.g. a hardcoded value that
 coincidentally matches today's config) — this is a real finding even when
 Verifier returned CONFIRMED for the corresponding functional row, since the
 UI behavior looked correct today but the underlying implementation is wrong.
+Its Bug Report entry's Reproduction steps describe how to observe the
+contradiction, not a UI failure — e.g. "Read the configured value at
+[screen]; inspect [file:line] and confirm the value is a fixed constant,
+not read from that config at runtime" — and Expected/Actual describe the
+code behavior (expected: reads config dynamically; actual: hardcoded
+constant), not a click-path pass/fail.
 
 ### 9. Defect-Triage dispatch
 
@@ -636,7 +671,12 @@ to authorize. Dispatch one fresh `Agent` tool call. The prompt must include:
   as any other row — a retest isn't exempt from ruling out a
   record-specific quirk), leave its Classification as-is unless your own
   investigation now points to a different one, and set Resolution status to
-  `Retested — still failing`. If the retest instead surfaces a different
+  `Retested — still failing`. Leave Environment, Application version, and
+  Preconditions/test data as originally recorded unless the retest actually
+  used a materially different one of these (e.g. a newer app version) — if
+  so, update that specific field to the retest's actual value and note the
+  change inline rather than silently overwriting what the original entry
+  said. If the retest instead surfaces a different
   symptom than the original entry describes, that's the distinct-new-finding
   case above, unchanged by this being a retest — write it as its own new
   entry, and separately set the original entry's Resolution status to
@@ -706,7 +746,11 @@ When a round includes one or more `[retest]` rows (Stage 1), update each
 referenced `DEFECT-LOG.md` entry's Resolution status field in place once
 Verifier's result is known: `Retested — resolved` if Verifier's independent
 check confirms the original symptom no longer reproduces, or `Retested —
-still failing` if Stage 9 confirms it still does. If Stage 9 already set
+still failing` if Stage 9 confirms it still does. A retest that passes
+(Verifier CONFIRMED) never has a REJECTED/BLOCKED row for Stage 9 to
+dispatch on, so this stage — not Stage 9 — is always the one that writes
+`Retested — resolved`; that is not a gap, it is simply which stage's own
+dispatch condition happens to be met. If Stage 9 already set
 this field for the same entry this round (per its own instructions), don't
 overwrite it here — this is the same in-place-edit precedent as the
 classification-correction rule above: appending a duplicate entry for a
