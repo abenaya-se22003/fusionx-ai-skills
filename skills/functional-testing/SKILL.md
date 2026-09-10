@@ -146,7 +146,26 @@ to invent. If the named entry can't actually be found in `DEFECT-LOG.md`,
 that's the same unresolved-ambiguity case as Stage 1's no-source-document
 handling above — escalate to the user for the correct entry rather than
 guessing which one was meant or silently treating the round as a fresh
-defect search. Use that entry's own Reproduction steps
+defect search.
+
+Check the referenced entry's own Reproduction steps before drafting the
+row: if they describe a UI/API action (a functionally observable symptom),
+this is a **functional retest** and everything below in this section
+applies unchanged. If instead they describe a code-inspection step (a
+Source-Verifier-originated finding per Stage 8 — the dynamic-vs-hardcoded
+contradiction case, logged even though the corresponding functional row
+was CONFIRMED because the UI happened to look correct that day), this is a
+**code-only retest**: only Source-Verifier can actually re-check whether
+the contradiction is still there, so this round must be type B or C with a
+codebase connection configured. If the user picked type A, or no codebase
+connection is available, that's a blocker on this row the same as any
+other input the skill can't act on — escalate before finalizing the plan
+at Stage 4 rather than letting Stage 7's functional CONFIRMED (which was
+never in dispute for this entry) silently stand in for a resolution it
+can't actually speak to. See Stage 8 and Stage 10 for how a code-only
+retest's resolution gets decided and written.
+
+Use that entry's own Reproduction steps
 and Expected result as the row's Steps/Expected — Discovery (stage 3) still
 confirms the screen/flow is actually reachable before finalizing the row
 (per the selector-drift gotcha, a UI release since the original defect was
@@ -238,6 +257,11 @@ needs to flag and what the Executor needs to capture.
   during this Discovery pass — confirm the screen/flow the referenced
   `DEFECT-LOG.md` entry describes is still reachable as described; don't
   skip straight to drafting the row from the Bug Report entry's text alone.
+  If the same field is also an on-record `DATA-LINEAGE.md` candidate, that's
+  a separate row with its own `[discover]`/`[reconfirm]` prefix, not the
+  same row carrying two prefixes — a retest verifies a defect's resolution,
+  tracing a value's source is a different question, and the Test Plan has
+  no shape for a row answering both at once.
 - Draft the round's plan using the Test Plan template below and save it as
   `FUNCTIONAL-TEST-PLAN-<topic>.md` at the target project root (not in this
   skill repo). `<topic>` is a short kebab-case label for the module/feature
@@ -564,6 +588,18 @@ changed" shortcut for a retest's actual functional outcome.
   `DATA-LINEAGE.md` row in scope this round, one combined dispatch covering
   both questions (lineage confirmation and failure root-cause) is fine —
   no need for two redundant dispatches against the same code area.
+- Every code-only `[retest]` row (per Stage 1's routing) — this round's
+  round type is already confirmed B/C with a codebase connection per that
+  routing rule, so this dispatch is never skipped for such a row. Include
+  the referenced `DEFECT-LOG.md` entry's file/line finding from when it was
+  originally logged. Prompt: "Re-check the exact code location this entry
+  originally identified. Does it still fail to read the config/settings
+  value dynamically at runtime — the same contradiction as before — or does
+  it now read it correctly? Report file/line and state plainly which of the
+  two it is; this determines whether the referenced defect is resolved."
+  This dispatch's result — not Verifier's functional CONFIRMED for the
+  corresponding row, which was never in dispute — is what stage 10 records
+  as the retest's outcome for this entry.
 
 Source-Verifier updates `DATA-LINEAGE.md`'s "Verification method" column
 itself (it has the same write access as every other dispatched role, per
@@ -743,14 +779,21 @@ functional observation, which didn't change) — a Classification correction
 never implies revisiting Pass/Fail/Blocked.
 
 When a round includes one or more `[retest]` rows (Stage 1), update each
-referenced `DEFECT-LOG.md` entry's Resolution status field in place once
-Verifier's result is known: `Retested — resolved` if Verifier's independent
-check confirms the original symptom no longer reproduces, or `Retested —
-still failing` if Stage 9 confirms it still does. A retest that passes
-(Verifier CONFIRMED) never has a REJECTED/BLOCKED row for Stage 9 to
-dispatch on, so this stage — not Stage 9 — is always the one that writes
-`Retested — resolved`; that is not a gap, it is simply which stage's own
-dispatch condition happens to be met. If Stage 9 already set
+referenced `DEFECT-LOG.md` entry's Resolution status field in place. For a
+**functional retest** (Stage 1's routing), use Verifier's result once it's
+known: `Retested — resolved` if Verifier's independent check confirms the
+original symptom no longer reproduces, or `Retested — still failing` if
+Stage 9 confirms it still does. For a **code-only retest** (Stage 1's
+routing — a Source-Verifier-originated entry with no functional symptom),
+Resolution status instead comes from Stage 8's re-check of the same code
+location: `Retested — resolved` if the contradiction is gone, `Retested —
+still failing` if it's still there — never from the corresponding
+functional row's CONFIRMED, which was never in dispute for this entry. For
+a functional retest that passes (Verifier CONFIRMED), there's never a
+REJECTED/BLOCKED row for Stage 9 to dispatch on, so this stage — not
+Stage 9 — is always the one that writes `Retested — resolved`; that is not
+a gap, it is simply which stage's own dispatch condition happens to be met.
+If Stage 9 already set
 this field for the same entry this round (per its own instructions), don't
 overwrite it here — this is the same in-place-edit precedent as the
 classification-correction rule above: appending a duplicate entry for a
