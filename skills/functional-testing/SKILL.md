@@ -144,11 +144,14 @@ and Expected result as the row's Steps/Expected — Discovery (stage 3) still
 confirms the screen/flow is actually reachable before finalizing the row
 (per the selector-drift gotcha, a UI release since the original defect was
 logged may have moved things), but does not need to rediscover the scenario
-from scratch. If the user asks to retest every open or claimed-fixed defect
-for a module rather than naming one, draft one row per matching
-`DEFECT-LOG.md` entry the same way. A retest row's outcome is written back
-into the referenced Bug Report entry's Resolution status field, not a new
-entry — see Stage 9 and Stage 10.
+from scratch. If the user asks to retest every open, claimed-fixed, or
+still-failing defect for a module rather than naming one (i.e. every entry
+that isn't already `Retested — resolved` or `Won't fix`), draft one row per
+matching `DEFECT-LOG.md` entry the same way. A retest row's outcome is
+written back into the referenced Bug Report entry's Resolution status field
+in place — see Stage 9 and Stage 10 — rather than a new entry, unless the
+retest surfaces a genuinely different symptom than the entry describes, in
+which case that different symptom does get its own new entry (Stage 9).
 
 ### 2. Round-type selection
 
@@ -486,17 +489,24 @@ A `DATA-LINEAGE.md` row that a prior round already verified as "source code
 (file:line)" and that Traceability reconfirmed this round with no change to
 the claimed source doesn't need Source-Verifier to redo the same code check
 — carry the prior "source code" verification forward. Only dispatch
-Source-Verifier again for a reconfirmed row if Traceability's reconfirm
-this round actually found something different from what was on record
-before.
+Source-Verifier again for a reconfirmed row if the row's claimed source
+changed this round for any reason — either Traceability's own reconfirm
+found something different from what was on record before, or Stage 7
+(Verifier) overwrote the row with a correction per its lineage-correction
+rule. A Stage 7 correction always invalidates any carry-forward for that
+row, even if Traceability itself reported no change — Traceability and
+Verifier can disagree about the same row in the same round, and it's
+Verifier's version that's current once stage 7 has run.
 
 - Every `DATA-LINEAGE.md` row Traceability added or reconfirmed this round
   with a confirmed source (round types B/C only) — skip any row Traceability
   recorded as `UNCONFIRMED`; there's no claimed source yet for Source-Verifier
   to check code against, and that stays open as a Traceability gap, not a
   Source-Verifier task. Prompt: "Given this claimed data source (module,
-  screen, API endpoint, and the config/settings screen Traceability
-  identified), find the actual code that implements this — the validation
+  screen, API endpoint, and the config/settings screen currently recorded
+  in the row — this may be Traceability's original finding or a later
+  Stage 7 correction; use whichever is currently on record), find the
+  actual code that implements this — the validation
   rule, the query, or the config lookup. Confirm whether the code's real
   behavior matches what Traceability observed from the UI/API alone (for
   example: a dropdown that looks config-driven from the API response but
@@ -621,15 +631,24 @@ to authorize. Dispatch one fresh `Agent` tool call. The prompt must include:
   later. For a `[retest]` row (Stage 1) that still reproduces with the same
   symptom the referenced `DEFECT-LOG.md` entry already describes, don't
   write a new entry — update the existing one in place: restate its
-  Reproducibility (e.g. 'reproduced again on retest, attempt 1 of 1'),
-  leave its Classification as-is unless your own investigation now points
-  to a different one, and set Resolution status to `Retested — still
-  failing`. If the retest instead surfaces a different symptom than the
-  original entry describes, that's the distinct-new-finding case above,
-  unchanged by this being a retest — write it as its own new entry, and
-  separately set the original entry's Resolution status to `Retested —
-  resolved` (the original symptom didn't reproduce, even though a new,
-  different defect was found)."
+  Reproducibility using this stage's normal retry rule above (the
+  different-input-or-fresh-session retry still applies to a retest the same
+  as any other row — a retest isn't exempt from ruling out a
+  record-specific quirk), leave its Classification as-is unless your own
+  investigation now points to a different one, and set Resolution status to
+  `Retested — still failing`. If the retest instead surfaces a different
+  symptom than the original entry describes, that's the distinct-new-finding
+  case above, unchanged by this being a retest — write it as its own new
+  entry, and separately set the original entry's Resolution status to
+  `Retested — resolved` (the original symptom didn't reproduce, even though
+  a new, different defect was found). A `[retest]` row that Verifier
+  returned BLOCKED (and that reaches this stage under this stage's normal
+  BLOCKED-dispatch condition above, rather than the destructive-exception
+  case that skips straight to Reporting) is inconclusive, not evidence
+  either way — investigate whether the block is itself resolvable the same
+  as for any other BLOCKED row, but do not set the referenced entry's
+  Resolution status to either `Retested —` value on the strength of a block;
+  leave it exactly as it was and report the block plainly instead."
 
 ### 10. Reporting (main thread)
 
@@ -696,7 +715,12 @@ across multiple entries instead of keeping it in one place. The Test Plan
 row's own Status (Pass/Fail/Blocked) is filled from Verifier's result the
 same as any other row — a `[retest]` row that passes gets Status `Pass`
 even though the `DEFECT-LOG.md` entry it closes out keeps its full original
-history rather than being deleted.
+history rather than being deleted. A `[retest]` row that came back BLOCKED
+— whether Stage 9 reported it inconclusive, or it was the destructive-
+exception BLOCKED case that skipped Stage 9 entirely — leaves the
+referenced entry's Resolution status exactly as it was; state the block
+plainly in this round's report instead of guessing at a resolved/still-
+failing outcome the round didn't actually establish.
 
 ## Templates
 
