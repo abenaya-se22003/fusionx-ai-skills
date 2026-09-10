@@ -16,6 +16,12 @@ read this alongside `SKILL.md`.
 - `playwright-cli list` / `tab-list` often shows a browser session already
   open and authenticated to UAT from a prior task — check before opening a
   fresh one.
+- `playwright-cli open` launches headless by default — the browser never
+  actually becomes visible unless `open` is called with `--headed`. Needed
+  for any stage where the human has to see or interact with the browser
+  (login, MFA, watching the automation); discovering this after the fact
+  means the human was staring at nothing while the automation waited
+  silently for a login it couldn't ask for.
 - A headed browser window may launch successfully but not be visibly on top.
   Force it to the foreground via PowerShell:
   `Get-Process | Where-Object { $_.MainWindowTitle -like "*<title fragment>*" }`
@@ -28,6 +34,55 @@ read this alongside `SKILL.md`.
 - Some antd `Select` components don't respond to a plain synthetic `.click()`
   (focus fires, dropdown never opens). Dispatch the full sequence instead:
   `mousedown` → `mouseup` → `click`, all `bubbles:true, cancelable:true`.
+- **Never call `playwright-cli attach <session>` to reconnect to a session
+  opened via `open`.** `attach` is for connecting to a browser running
+  *externally* to `playwright-cli` (`--cdp=chrome`, `--extension`) — not for
+  reconnecting to a session `playwright-cli` itself already manages.
+  Confirmed by direct reproduction (functional-testing skill's first live
+  pilot): calling `attach` on a self-opened session reliably kills it
+  immediately (`Error: Daemon process exited with code 1 [PlaywrightError:
+  connect ENOENT <session-name>]`), from the main thread or a dispatched
+  subagent, regardless of `--persistent`, launch tool, or timing — it cost
+  six consecutive failed subagent dispatches before being root-caused. To
+  use an existing session, just run plain commands with the session name —
+  `playwright-cli -s=<name> <command>` (`list`, `snapshot`, `tab-list`,
+  etc.) — no attach step needed at all, ever.
+- Don't reach for a `--config` file with `launchOptions.args:
+  ["--start-maximized"]` + `contextOptions.viewport: null` to get a "real"
+  maximized OS window instead of the small default launch size. Confirmed
+  by direct testing: that specific combination crashed the browser session
+  against a real FusionX app within under a minute every time, while
+  surviving 150+ seconds without issue on a trivial test page — a launch
+  config that's safe on a placeholder site is not proof it's safe against a
+  heavier real app. Use `playwright-cli resize <w> <h>` (e.g. `1920 1080`)
+  right after `open --headed` instead — it sets a large viewport via CDP,
+  which solves the actual "layout looks wrong in a small viewport" problem
+  without the window-chrome crash risk.
+- `playwright-cli screenshot --filename=<name>.png` (and default snapshot
+  files) save relative to wherever the `playwright-cli` process itself was
+  launched from, not necessarily the project folder you expect — this
+  matters most for a dispatched subagent, whose working directory may not
+  match the main thread's. Pass an absolute path
+  (`--filename="D:\full\path\to\screenshots\name.png"`) for anything that
+  needs to land in a specific project folder, and confirm the actual
+  resulting path rather than assuming the name you typed is where it
+  landed.
+- If a session's daemon dies but the Chrome *window* it spawned doesn't
+  actually close (observed: `playwright-cli list` reported the session
+  gone, but the browser window was still open on screen, just no longer
+  controllable), reopening starts a **second**, independently-controllable
+  window — while the first, orphaned one is still sitting there too.
+  `playwright-cli kill-all` clearing daemon *registrations* does not
+  guarantee the underlying Chrome *process* actually exits. Before
+  reopening after any suspected crash, confirm how many browser windows are
+  actually visible on screen rather than assuming a dead daemon means a
+  dead window — especially before opening a replacement while a human might
+  still be mid-login on the original. `--persistent` (with no explicit
+  `--profile`) is a genuinely useful mitigation for login fatigue across a
+  multi-dispatch task — the default persistent profile path is stable
+  across separate `open` calls, so a human's login carries over and a later
+  `open --persistent` can come up already-authenticated with no login
+  screen at all.
 
 ## A click that produces zero visible reaction
 
