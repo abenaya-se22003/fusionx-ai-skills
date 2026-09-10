@@ -1,0 +1,10 @@
+{
+  "name": "fusionx-ai-skills",
+  "description": "AI agent skills supporting FusionX business-analysis work — user manuals, functional testing, requirement documentation, and more.",
+  "version": "1.0.0",
+  "author": {
+    "name": "r4ge-quit"
+  },
+  "homepage": "https://github.com/r4ge-quit/fusionx-ai-skills",
+  "repository": "https://github.com/r4ge-quit/fusionx-ai-skills"
+}
