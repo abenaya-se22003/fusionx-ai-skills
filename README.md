@@ -9,6 +9,27 @@ rather than self-certified results.
 This repo is scoped to `.claude/` skills and agents only — not the
 surrounding project's UAT screenshots, manuals, or scripts.
 
+## Install
+
+No cloning needed — either of these works:
+
+**[`npx skills`](https://github.com/vercel-labs/skills)** (Claude Code, Cursor, Codex, Gemini CLI, and other Agent Skills Standard tools):
+
+```bash
+npx skills add r4ge-quit/fusionx-ai-skills
+```
+
+**Claude Code's native plugin system:**
+
+```
+/plugin marketplace add r4ge-quit/fusionx-ai-skills
+/plugin install fusionx-ai-skills@fusionx-ai-skills
+```
+
+Skills are auto-invoked by description either way. Plugin install also
+namespaces them as `/fusionx-ai-skills:functional-testing` and
+`/fusionx-ai-skills:user-manual-update`.
+
 ## Skills
 
 - **[`user-manual-update`](skills/user-manual-update/)** — Turns a Jira
