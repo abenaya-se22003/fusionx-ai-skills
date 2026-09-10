@@ -28,9 +28,11 @@ Do not import that tool's read-only restriction here.
 
 - A live, human-authenticated browser session via the project's configured
   browser-automation tool (e.g. Playwright MCP or `playwright-cli`).
-  Executor, Traceability, Verifier, and Defect-Triage all attach to this
+  Executor, Traceability, Verifier, and Defect-Triage all operate on this
   same session per the Subagent Dispatch Rules — none of them logs in
-  itself.
+  itself, and none of them uses a browser-tool "attach" command to connect
+  to it (see the Subagent Dispatch Rules for why that specific command is
+  dangerous with `playwright-cli`).
 - That tool must be able to capture raw network requests/responses
   correlated to the action that triggered them — this is not optional
   instrumentation, it's what Executor's evidence, Traceability, and
@@ -408,6 +410,13 @@ Dispatch one fresh `Agent` tool call, `subagent_type: "general-purpose"`,
   authorization. The main thread re-dispatches a fresh Executor call for the
   pending rows only, after the event has occurred.
 
+- This explicit instruction, if the configured browser-automation tool is
+  `playwright-cli`: "Any screenshot or snapshot file you save must use an
+  absolute path (`--filename=<full path>`) inside the target project root
+  — `playwright-cli` otherwise saves relative to its own invocation
+  directory, not this project's folder. State the actual resulting path in
+  your report rather than assuming the name you typed is where it landed."
+
 Expected output: one evidence-backed result per plan row (not bare
 pass/fail — a screenshot/state reference and what was actually observed),
 plus the network-capture log file.
@@ -504,7 +513,12 @@ Executor or Traceability — it must not see their claimed results, only:
   precondition or environment genuinely prevents execution (missing data,
   screen unreachable, a flagged destructive step with no disposable record),
   not for when the observed behavior simply fails to match expectation,
-  which is REJECTED. Write this evidence — your per-row result plus
+  which is REJECTED. If the configured browser-automation tool is
+  `playwright-cli`, save any screenshot/snapshot with an absolute
+  `--filename=<full path>` inside the target project root — it otherwise
+  saves relative to its own invocation directory, not this project's
+  folder; state the actual resulting path rather than assuming the name
+  you typed is where it landed. Write this evidence — your per-row result plus
   screenshot/state references, and, for any row involving an API
   interaction, the raw request/response you observed during your own
   independent execution (or, if network capture is unavailable this round
