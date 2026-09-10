@@ -1069,11 +1069,15 @@ screen and Verification method still describe the source, not the defect.
   connecting to a browser that's running *externally* to `playwright-cli`
   entirely (`--cdp=`, `--extension`), not for reconnecting to a session
   `playwright-cli` itself already manages via `open`. Calling `attach` on
-  a session opened via `open` reliably kills it (see `gotchas.md`'s
-  root-caused writeup) — this is the single most disruptive mistake a
-  dispatch prompt for this skill can make, and it looks exactly like an
-  unrelated environment crash until traced back to this. Source-Verifier
-  is the only role that never touches the browser at all (see below).
+  a session opened via `open` reliably kills it — see
+  `../user-manual-update/gotchas.md`'s "Finding and driving the browser"
+  section for the full root-caused writeup (exact error text and the
+  evidence the fix holds under sustained use); `gotchas.md` (this skill's
+  own file) only summarizes and points there. This is the single most
+  disruptive mistake a dispatch prompt for this skill can make, and it
+  looks exactly like an unrelated environment crash until traced back to
+  this. Source-Verifier is the only role that never touches the browser at
+  all (see below).
 - This rule covers the default single-role case. A row that structurally
   requires a second, different authenticated identity to complete (e.g. a
   maker-checker approval step where the app enforces that the submitter
