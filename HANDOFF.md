@@ -148,6 +148,43 @@ sign-off) to run headless.
   expect the same and plan for a human-set round cap rather than an
   open-ended zero-gap loop.
 
+### Follow-up pass: closing known gaps after ship
+
+After merging, the user reviewed the honest gap list this build's summary
+surfaced and asked to close three of them: no regression/retest flow for
+`DEFECT-LOG.md`, an underspecified Verifier-vs-Traceability lineage
+disagreement, and a stale design spec. All three landed in one small
+follow-up branch:
+
+- Added a `Resolution status` field to the Bug Report template and a
+  `[retest: <identifier>]` row convention so a previously logged defect can
+  actually be re-verified in place, never just appended to forever.
+- Added a lineage-correction authority rule: Verifier's independent
+  `DATA-LINEAGE.md` re-check now supersedes Traceability's claim in the row
+  itself when they disagree, and Source-Verifier (which runs after Verifier
+  in pipeline order) picks up the correction automatically.
+- Updated `docs/superpowers/specs/2026-09-09-functional-testing-skill-design.md`
+  with an "Amendments after implementation" section rather than silently
+  editing the original approved text — the spec had drifted (4 roles/9
+  stages/6 files vs. the shipped 5 roles/11 stages/8 files) because the
+  plan evolved during writing-plans but the spec was never revisited.
+- **New lesson confirmed by this pass**: a single Critical finding
+  (Stage 8's carry-forward optimization for `DATA-LINEAGE.md` rows didn't
+  account for a Verifier correction, so a stale source-code verification
+  could silently survive) only surfaced because the reviewer was told to
+  re-derive the exact failure scenario from its own prior finding, not just
+  confirm the diff "looks like" a fix. A reviewer that only checks "is new
+  text present" over "does the new text actually force the right dispatch
+  in the adversarial case" would have approved a fix that didn't work.
+- **Also confirmed**: a plain consistency reviewer (opus, reading the whole
+  document for contradictions) and a fresh execution-walkthrough subagent
+  (haiku, told to actually run a hypothetical scenario stage-by-stage) find
+  different classes of gap — the walkthrough surfaced 9 more genuine small
+  gaps (undefined identifier scheme, BLOCKED-retest status left
+  unspecified in edge paths, etc.) that the consistency review had no
+  reason to look for. Run both when hardening a new addition to an
+  already-stable document, not just one or the other.
+
 ## Where the deeper history lives
 
 This session's full reasoning (including the earlier back-and-forth on

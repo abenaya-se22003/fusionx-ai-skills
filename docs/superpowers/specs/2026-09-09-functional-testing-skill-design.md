@@ -1,7 +1,14 @@
 # Design: `functional-testing` skill
 
 Date: 2026-09-09
-Status: Approved by user, pending write-up as implementation plan.
+Status: Implemented and merged to `main`. This document is kept for its
+original design rationale; it is no longer a complete description of the
+shipped skill — see "Amendments after implementation" below for what
+changed, and `HANDOFF.md` for the full build history (20 rounds of
+fresh-subagent validation, final whole-branch review, and two follow-up
+gap-closing passes). `skills/functional-testing/SKILL.md` is the
+authoritative, current source of truth for behavior; where this spec and
+that file disagree, the file wins.
 
 ## Purpose
 
@@ -174,6 +181,61 @@ the global CLAUDE.md convention — not this skill repo):
    data).
 5. Update `HANDOFF.md` afterward with what this build learned, for the next
    skill/agent after this one.
+
+## Amendments after implementation
+
+Recorded here rather than silently editing the sections above, so the
+original approved design stays legible alongside what actually shipped.
+
+1. **A 5th role, Source-Verifier, was added.** Orthogonal to round type
+   A/B/C: it runs whenever the target project has a configured codebase
+   path (read-only access — `Read`/`Grep`/`Glob`, never the browser),
+   cross-checking Traceability's confirmed `DATA-LINEAGE.md` claims and any
+   Verifier-rejected functional row against the actual implementation. It
+   degrades to an explicit, never-silent skip when no codebase connection
+   is configured. This wasn't in the original 4-role design because the
+   need for white-box (source-code) confirmation on top of black-box
+   (UI/API) confirmation only became clear during planning.
+2. **The pipeline grew from 9 steps to 11 (stages 0–10).** A "Check
+   standing state" step (reading `AUDIT-LOG.md`/`FLOWS-LOG.md`/
+   `DEFECT-LOG.md`/`DATA-LINEAGE.md` before anything else, and now also the
+   codebase-connection question) became its own explicit stage 0 ahead of
+   Intake, and Source-Verifier occupies stage 8, between Verifier (7) and
+   Defect-Triage (9).
+3. **Two more working files were added**, both root-located the same as
+   the original six: `NETWORK-CAPTURE-<round-id>.md` (Executor's raw,
+   per-action network request/response log — Traceability and Verifier
+   both read from it rather than a summarized version) and
+   `VERIFIER-FINDINGS-<round-id>.md` (Verifier's own independently-derived
+   evidence, kept separate from Executor's capture log so downstream
+   stages can't accidentally consume an unverified claim as if it were
+   confirmed).
+4. **A regression/retest flow was added for `DEFECT-LOG.md`.** The original
+   design left the log append-only with no way to verify a fix actually
+   landed. The Bug Report template gained a `Resolution status` field
+   (`Open / Fixed — pending retest / Retested — resolved / Retested —
+   still failing / Won't fix`), and Intake/Discovery/Defect-Triage/
+   Reporting each gained a small addition handling a `[retest:
+   <identifier>]`-tagged row: reuse the entry's own reproduction steps,
+   confirm live reachability, and update the existing entry in place
+   (never a duplicate) once Verifier's independent re-check settles it.
+5. **A lineage-correction authority rule was added.** The original design
+   didn't say what happens when Verifier's independent re-check of a
+   `DATA-LINEAGE.md` row contradicts Traceability's claimed source.
+   Verifier's finding now supersedes Traceability's in the row itself (the
+   same way Verifier's functional result already supersedes Executor's),
+   and because Verifier (stage 7) runs before Source-Verifier (stage 8) in
+   pipeline order, Source-Verifier automatically checks the corrected claim
+   without needing a separate re-dispatch mechanism.
+6. **Validation went well beyond "at least one round."** The skill was
+   hardened through 20 rounds of fresh-subagent adversarial validation
+   across the initial build, plus two further rounds closing gaps 4 and 5
+   above after a user follow-up review. Literal "zero new gaps" was never
+   reached in any of these passes; the human explicitly accepted "zero
+   structural contradictions found" (which was achieved and independently
+   confirmed by multiple reviewers) as the practical completion bar
+   instead. See `HANDOFF.md` for the reasoning and the full round-by-round
+   account.
 
 ## Explicitly out of scope for this spec
 
