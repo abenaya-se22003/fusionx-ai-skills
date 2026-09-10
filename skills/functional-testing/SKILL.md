@@ -241,7 +241,24 @@ needs to flag and what the Executor needs to capture.
 
 ### 3. Discovery & Planning (main thread, human-authenticated browser)
 
-- Navigate the target screens/flows named by Intake.
+- Navigate the target screens/flows named by Intake. Discovery itself is
+  free to explore any or all branches it finds along the way — there's no
+  restriction on what you look at while forming the plan. But if Discovery
+  surfaces a genuine multi-option branch point that Intake's source didn't
+  name (e.g. a product-type selector with 5 options, when the request just
+  said "test the New Lead creation flow" with no product specified), don't
+  silently pick one yourself and only surface it as a line in the drafted
+  plan's "Scope and exclusions" for the user to notice on review. Ask the
+  user directly which option(s) to actually build the plan around, as its
+  own question, before drafting — the same way Stage 1 already asks rather
+  than guesses when the source document itself is ambiguous. This doesn't
+  apply when the source already named the option (a ticket that says
+  "test the LOAN product path" doesn't need re-asking), and it doesn't
+  apply to routine per-value branch testing of a control the Coverage
+  Standard already requires exhausting (e.g. every dropdown value that
+  changes behavior, per the bullets below) — it's specifically for a
+  fork where testing only one branch is the realistic, intended scope of
+  the round, and which branch that is hasn't been decided by anyone yet.
 - Take snapshots; enumerate every control per the Coverage Standard
   (buttons, dropdowns, tabs, modals, nested records, row actions, etc.).
 - Regardless of round type, flag candidates cheaply: any dropdown, field,
