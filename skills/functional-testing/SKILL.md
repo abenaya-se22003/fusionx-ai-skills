@@ -43,13 +43,23 @@ Do not import that tool's read-only restriction here.
   to proceed with UI-observable evidence only (state this limitation in
   every affected round's report, not just once) or pause until a capable
   tool is configured. Never substitute a screenshot for a missing
-  network-capture entry and call the evidence requirement met.
+  network-capture entry and call the evidence requirement met. Without this
+  capability, round types B and C (Stage 2) cannot actually function —
+  Traceability has nothing to trace from — so a missing-capability round
+  effectively forces round type A regardless of what the user would
+  otherwise have picked; say this plainly when asking the Stage 2 question
+  rather than letting them pick B/C and discover the limitation later.
 - `Agent` tool access, to dispatch the five roles described throughout
   Workflow below.
 - `Read`/`Grep`/`Glob` file access, for Source-Verifier — only needed when
   a codebase connection is configured for the round.
 - `Write` file access for every dispatched role, per the Subagent Dispatch
-  Rules — each writes its own artifacts directly.
+  Rules — each writes its own artifacts directly. The main thread itself
+  needs the same `Read`/`Write` access to the target project root — it
+  reads/creates the four standing logs at Stage 0, writes and revises
+  `FUNCTIONAL-TEST-PLAN-<topic>.md` at Stages 3–4, and writes
+  `TEST-EXECUTION-REPORT-<round-id>.md` plus updates `FLOWS-LOG.md` and
+  `AUDIT-LOG.md` at Stage 10.
 - `../user-manual-update/gotchas.md` (referenced below) is a sibling
   skill's file in this same repo, not a hard dependency: if it doesn't
   exist in a given checkout, note that in the round's plan header and
@@ -350,7 +360,12 @@ Dispatch one fresh `Agent` tool call, `subagent_type: "general-purpose"`,
   a network-capture log file named `NETWORK-CAPTURE-<round-id>.md` at the
   target project root — one heading per action, followed by its raw
   request/response pairs underneath. Do not summarize them away —
-  Traceability and Verifier need the raw entries." `<round-id>` is a short
+  Traceability and Verifier need the raw entries. If the Prerequisites
+  section's network-capture-capability check found this isn't actually
+  possible with the available tool, write `NETWORK-CAPTURE-<round-id>.md`
+  with one heading per action stating plainly 'network capture unavailable
+  this round — evidence is UI-observable only' instead of raw pairs; don't
+  fabricate entries or silently omit the file." `<round-id>` is a short
   sequential label unique within the target project (e.g. `round-1`,
   `round-2`) — check existing `TEST-EXECUTION-REPORT-*.md` files at the
   project root for the highest number used so far and increment it; use
@@ -1106,7 +1121,10 @@ screen and Verification method still describe the source, not the defect.
   disposable data instead.
 - Root-cause a blocked/no-data result via the actual network request/
   response before logging it as a defect — don't accept "no data" at face
-  value.
+  value. If network capture is unavailable this round (Prerequisites), root
+  cause using whatever UI-observable evidence exists instead, and say so
+  explicitly in the Bug Report's Evidence section — never silently treat
+  the absence of network evidence as itself proof of "no data."
 - When a row uses an existing shared UAT record (not one created fresh this
   round) and its state doesn't match what the plan's steps or Executor's own
   actions account for, don't assume it's an application defect by default —
