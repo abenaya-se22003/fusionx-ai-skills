@@ -1031,9 +1031,17 @@ screen and Verification method still describe the source, not the defect.
 - Executor, Traceability, Verifier, and Defect-Triage all operate the same
   already-authenticated browser session established during Discovery
   (stage 3) — none of them attempts its own login or assumes a fresh
-  unauthenticated session. Find and attach to that existing session (e.g.
-  via `playwright-cli list`/`tab-list`, per `../user-manual-update/
-  gotchas.md`) rather than launching a new browser instance. Source-Verifier
+  unauthenticated session, and none of them opens a new browser instance.
+  If the tool is `playwright-cli`: use plain `playwright-cli -s=<session>
+  <command>` calls (`list`, `snapshot`, `tab-list`, etc.) to find and use
+  the existing session — never the `attach` command, which is for
+  connecting to a browser that's running *externally* to `playwright-cli`
+  entirely (`--cdp=`, `--extension`), not for reconnecting to a session
+  `playwright-cli` itself already manages via `open`. Calling `attach` on
+  a session opened via `open` reliably kills it (see `gotchas.md`'s
+  root-caused writeup) — this is the single most disruptive mistake a
+  dispatch prompt for this skill can make, and it looks exactly like an
+  unrelated environment crash until traced back to this. Source-Verifier
   is the only role that never touches the browser at all (see below).
 - This rule covers the default single-role case. A row that structurally
   requires a second, different authenticated identity to complete (e.g. a
