@@ -135,6 +135,21 @@ narrowed pass. State the narrow scope in the drafted plan's "Scope and
 exclusions" field so the user is approving it at the Stage 4 gate, not
 learning about it afterward.
 
+If the request is to verify whether a previously logged defect is actually
+fixed (the user names a specific `DEFECT-LOG.md` entry, or a ticket says
+something like "verify fix for X"), treat this as a retest: draft one Test
+Plan row per referenced entry, Scenario cell prefixed `[retest: <Bug Report
+Summary or entry identifier>]`, and use that entry's own Reproduction steps
+and Expected result as the row's Steps/Expected — Discovery (stage 3) still
+confirms the screen/flow is actually reachable before finalizing the row
+(per the selector-drift gotcha, a UI release since the original defect was
+logged may have moved things), but does not need to rediscover the scenario
+from scratch. If the user asks to retest every open or claimed-fixed defect
+for a module rather than naming one, draft one row per matching
+`DEFECT-LOG.md` entry the same way. A retest row's outcome is written back
+into the referenced Bug Report entry's Resolution status field, not a new
+entry — see Stage 9 and Stage 10.
+
 ### 2. Round-type selection
 
 Ask the user (one question, multiple choice) which round type applies:
@@ -204,6 +219,10 @@ needs to flag and what the Executor needs to capture.
   round type C — "reconfirm" doesn't mean "exclude from tracing," it means
   "trace it again against the known source" rather than starting from
   scratch.
+- A `[retest]`-prefixed row (Stage 1) still gets a live navigation check
+  during this Discovery pass — confirm the screen/flow the referenced
+  `DEFECT-LOG.md` entry describes is still reachable as described; don't
+  skip straight to drafting the row from the Bug Report entry's text alone.
 - Draft the round's plan using the Test Plan template below and save it as
   `FUNCTIONAL-TEST-PLAN-<topic>.md` at the target project root (not in this
   skill repo). `<topic>` is a short kebab-case label for the module/feature
@@ -404,6 +423,21 @@ facts (the row's final Status, and — if the underlying behavior is a
 confirmed defect — its Bug Report), per stage 10's rule against process
 narration in user-facing deliverables.
 
+For a `DATA-LINEAGE.md` row specifically, the same override applies to the
+row's content, not just the round's narrative: if Verifier's independent
+re-check of the claimed source contradicts Traceability's — a different
+screen, no screen at all where Traceability claimed one, or a screen found
+where Traceability claimed none ("suspected hardcoded") — Verifier writes
+its own finding directly into that row's Source/config screen and
+Verification method fields, superseding Traceability's claim, the same way
+Verifier's result already supersedes Executor's for a functional row. The
+discrepancy itself still goes into the round's `AUDIT-LOG.md` entry per the
+paragraph above. Stage 8 (Source-Verifier) always reads whatever
+`DATA-LINEAGE.md` currently says at the time it runs — since this
+correction happens here, before stage 8, Source-Verifier automatically
+checks the corrected claim, not the superseded one; no separate re-dispatch
+of Traceability is needed to fix its own row.
+
 ### 8. Source-Verifier dispatch
 
 Skip entirely if the standing-state check (stage 0) recorded no codebase connection — note
@@ -584,7 +618,18 @@ to authorize. Dispatch one fresh `Agent` tool call. The prompt must include:
   directly observed or retried — 'Reproducibility' from your own retry
   results, 'Suggested severity' from the business impact of the observed
   failure — don't leave fields blank for the main thread to backfill
-  later."
+  later. For a `[retest]` row (Stage 1) that still reproduces with the same
+  symptom the referenced `DEFECT-LOG.md` entry already describes, don't
+  write a new entry — update the existing one in place: restate its
+  Reproducibility (e.g. 'reproduced again on retest, attempt 1 of 1'),
+  leave its Classification as-is unless your own investigation now points
+  to a different one, and set Resolution status to `Retested — still
+  failing`. If the retest instead surfaces a different symptom than the
+  original entry describes, that's the distinct-new-finding case above,
+  unchanged by this being a retest — write it as its own new entry, and
+  separately set the original entry's Resolution status to `Retested —
+  resolved` (the original symptom didn't reproduce, even though a new,
+  different defect was found)."
 
 ### 10. Reporting (main thread)
 
@@ -638,6 +683,21 @@ independent facts about the same row (Status reflects Verifier's confirmed
 functional observation, which didn't change) — a Classification correction
 never implies revisiting Pass/Fail/Blocked.
 
+When a round includes one or more `[retest]` rows (Stage 1), update each
+referenced `DEFECT-LOG.md` entry's Resolution status field in place once
+Verifier's result is known: `Retested — resolved` if Verifier's independent
+check confirms the original symptom no longer reproduces, or `Retested —
+still failing` if Stage 9 confirms it still does. If Stage 9 already set
+this field for the same entry this round (per its own instructions), don't
+overwrite it here — this is the same in-place-edit precedent as the
+classification-correction rule above: appending a duplicate entry for a
+retest of an already-logged defect would fragment one defect's history
+across multiple entries instead of keeping it in one place. The Test Plan
+row's own Status (Pass/Fail/Blocked) is filled from Verifier's result the
+same as any other row — a `[retest]` row that passes gets Status `Pass`
+even though the `DEFECT-LOG.md` entry it closes out keeps its full original
+history rather than being deleted.
+
 ## Templates
 
 ### Test Plan (drafted at Stage 3, confirmed at Stage 4)
@@ -689,6 +749,7 @@ its result replaces the provisional value the same as any other row.
 - Classification: ApplicationDefect / SuspectedDefect / AutomationIssue / EnvironmentIssue / TestDataIssue / ExpectedBehaviour / NeedsBusinessReview
 - Suggested severity:
 - Reproducibility:
+- Resolution status: Open / Fixed — pending retest / Retested — resolved / Retested — still failing / Won't fix
 
 ## Preconditions and test data
 
@@ -710,6 +771,16 @@ its result replaces the provisional value the same as any other row.
 
 ## Related/duplicate issues and notes
 ```
+
+Defect-Triage sets Resolution status to `Open` when writing a new entry
+(stage 9). It only becomes `Fixed — pending retest` if the user says so at
+Intake (Stage 1) for an existing entry — this skill has no way to observe a
+code fix landing on its own, so this transition always comes from the user.
+It becomes `Retested — resolved` or `Retested — still failing` only via an
+actual `[retest]` round (Stage 1, Stage 9, Stage 10) — never set either of
+these from anything short of an independently-verified retest. `Won't fix`
+is likewise a user/business decision recorded here for reference, not
+something this skill infers.
 
 ### Coverage Report row shape (`FLOWS-LOG.md` table)
 
