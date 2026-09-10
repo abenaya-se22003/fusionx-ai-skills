@@ -490,7 +490,10 @@ Executor or Traceability — it must not see their claimed results, only:
   which is REJECTED. Write this evidence — your per-row result plus
   screenshot/state references, and, for any row involving an API
   interaction, the raw request/response you observed during your own
-  independent execution — to `VERIFIER-FINDINGS-<round-id>.md` at the
+  independent execution (or, if network capture is unavailable this round
+  per the Prerequisites section, state plainly that this row's evidence is
+  UI-observable only — never fabricate a request/response pair) — to
+  `VERIFIER-FINDINGS-<round-id>.md` at the
   project root (same `<round-id>` as this round's other artifacts); one
   heading per row. Downstream stages read Verifier's evidence from this
   file, not from Executor's network-capture log, for whatever Verifier
@@ -723,7 +726,11 @@ to authorize. Dispatch one fresh `Agent` tool call. The prompt must include:
   data may be TestDataIssue or EnvironmentIssue rather than
   ApplicationDefect). Root-cause it using the actual network
   request/response and, if provided, the Source-Verifier finding — not
-  just what the UI shows. Classify each confirmed defect using exactly one
+  just what the UI shows. If network capture was unavailable this round
+  (Prerequisites section), root-cause using whatever UI-observable evidence
+  exists instead and state that explicitly in the Bug Report's Evidence
+  section — never treat the absence of network evidence as itself proof of
+  anything. Classify each confirmed defect using exactly one
   of: ApplicationDefect, SuspectedDefect, AutomationIssue, EnvironmentIssue,
   TestDataIssue, ExpectedBehaviour, NeedsBusinessReview — a failure that
   traces to a shared UAT record having been externally modified by someone
