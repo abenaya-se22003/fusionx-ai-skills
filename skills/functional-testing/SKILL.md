@@ -24,6 +24,38 @@ it performs full create/edit/submit/approve/reject/delete transaction
 testing with disposable UAT data wherever the environment authorizes it.
 Do not import that tool's read-only restriction here.
 
+## Prerequisites
+
+- A live, human-authenticated browser session via the project's configured
+  browser-automation tool (e.g. Playwright MCP or `playwright-cli`).
+  Executor, Traceability, Verifier, and Defect-Triage all attach to this
+  same session per the Subagent Dispatch Rules — none of them logs in
+  itself.
+- That tool must be able to capture raw network requests/responses
+  correlated to the action that triggered them — this is not optional
+  instrumentation, it's what Executor's evidence, Traceability, and
+  Defect-Triage's root-causing all depend on (see the global instructions'
+  root-cause rule and Stage 5's network-capture instruction). Confirm this
+  capability actually exists before Stage 2 — many browser MCP tools expose
+  only navigate/click/snapshot, not network interception. If it isn't
+  available, this is a real environment limitation: surface it plainly at
+  Stage 0, the same as any other blocker, and let the user decide whether
+  to proceed with UI-observable evidence only (state this limitation in
+  every affected round's report, not just once) or pause until a capable
+  tool is configured. Never substitute a screenshot for a missing
+  network-capture entry and call the evidence requirement met.
+- `Agent` tool access, to dispatch the five roles described throughout
+  Workflow below.
+- `Read`/`Grep`/`Glob` file access, for Source-Verifier — only needed when
+  a codebase connection is configured for the round.
+- `Write` file access for every dispatched role, per the Subagent Dispatch
+  Rules — each writes its own artifacts directly.
+- `../user-manual-update/gotchas.md` (referenced below) is a sibling
+  skill's file in this same repo, not a hard dependency: if it doesn't
+  exist in a given checkout, note that in the round's plan header and
+  proceed without it — it's supplementary operational knowledge, not
+  something Stage 0 blocks on.
+
 ## Read First, In Order
 
 1. Your global Playwright Full-Coverage Instructions (`~/.claude/CLAUDE.md`)
