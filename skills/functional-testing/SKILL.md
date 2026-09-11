@@ -24,6 +24,117 @@ it performs full create/edit/submit/approve/reject/delete transaction
 testing with disposable UAT data wherever the environment authorizes it.
 Do not import that tool's read-only restriction here.
 
+This skill is self-contained — it does not depend on any file outside this
+repo, including any user's personal global configuration. Everything needed
+to run a round (the Coverage Standard, Dropdowns and Selectable Controls,
+Search and Filtering, Transaction Testing, and Evidence Capture rules) is
+inlined below, so installing this repo (via `npx skills add` or the native
+plugin) is enough on its own — no manual copying of files into a teammate's
+own environment is required.
+
+## Coverage Standard, Transaction Testing, and Evidence Capture
+
+These rules govern every stage of Workflow below and are what every
+dispatched role (Executor, Traceability, Verifier, Source-Verifier,
+Defect-Triage) is held to. "Read First" points here instead of any external
+file.
+
+### No breadth-only passes — full depth from the first pass
+
+Never conclude a screen has "no target content" from its name, tile title,
+or menu label — open it. Never report a sweep complete after checking only
+entry points, tile titles, or default/landing states; every nested tab,
+modal, wizard step, dropdown branch, and rendered-output column must
+actually be exercised before anything is called clean. If time or scope
+genuinely forces a narrower pass, say so explicitly before starting and get
+the user's sign-off on the narrower scope — never narrow silently and
+present the result as the full sweep. A completion report that only lists
+what was checked, without confirming what full depth required and that the
+bar was met, is not acceptable.
+
+### Coverage Standard
+
+Cover every in-scope item: dashboard/landing entry points; every
+sidebar/top-nav process, parent menu, and nested menu item; every screen,
+tab, accordion, card, modal, drawer, wizard step, sub-screen; every button,
+icon button, link, row action, clickable field; search/filter/sort/
+pagination/expand-collapse/reset/clear/cancel/back/close controls; create/
+edit/submit/resubmit/view/update/delete/approve/reject/assign/remove-
+assignment actions where authorized; nested records (identifications,
+contacts, addresses, bank accounts, tax IDs, relationships, key persons,
+POAs); empty/populated/no-result/validation-error/success/pending/active/
+update/confirmation states; every approval category the app exposes, not
+just the default queue. Test both newly created records (validates the full
+creation lifecycle) and existing populated UAT records (validates inquiry,
+historical display, maintenance, nested-entry, downstream workflow) — if
+either type is unavailable, document the gap and reason rather than
+treating one as equivalent to the other.
+
+### Dropdowns and Selectable Controls
+
+For every dropdown, radio group, segmented control, switch, checkbox group,
+card selector, autocomplete, date/time picker: open it; record every static
+value exactly as displayed (capitalization, spelling); select every value
+at least once when it can change fields, validation, navigation, or
+workflow behavior — one representative value is only enough when the branch
+does not change the UI; follow and test every branch a selection creates,
+inspecting fields/sub-screens that appear, disappear, become mandatory, or
+become enabled; distinguish static values from dynamic/master-data results
+— for dependent lookups (Bank→Branch→Product, Country→Province→District),
+document the dependency and test representative parent values, don't
+describe a temporary subset of a live lookup as a permanent complete list;
+capture an expanded-control screenshot when the values matter to the
+report.
+
+### Search and Filtering
+
+For every search-criterion selector: record all criteria; execute a valid
+matching value where test data exists; test a valid value with no match;
+test blank input and record the validation response; test clear/reset;
+verify result selection, Active/Pending or equivalent tabs, pagination, and
+the details shown after selecting a result.
+
+### Transaction Testing
+
+Use both records created during the round and designated existing
+populated UAT records — if either is unavailable, document the missing
+coverage and reason rather than silently treating the other as equivalent.
+Exercise creation and submission to completion where the UI and
+authorization permit; exercise updates and resubmission where permitted;
+exercise nested add/view/update/delete actions where present; exercise
+every approval type on both approve and reject paths with suitable test
+items, entering meaningful remarks where required; verify the resulting
+status, queue, audit info, or confirmation message. Never perform an
+irreversible/production-impacting action without clear authorization. Never
+click a destructive control merely to inspect it — use a disposable UAT
+record, or stop at the confirmation dialog when mutation isn't authorized.
+
+### Evidence Capture
+
+Capture screenshots for: each major screen/process entry point; important
+initial/populated/review/confirmation/resulting states; expanded dropdowns
+and branch-changing selectors; add/view/edit/delete/submit/approve/reject/
+assignment-removal interfaces; nested-entry dialogs and completed
+nested-entry tables; search criteria, representative results, filters,
+relevant tabs. Capture continuously as you go, not at the end — transient
+dropdown/dialog/validation/confirmation states may not be reproducible
+later. Use descriptive, sequential filenames; exclude secrets/PII; keep
+bug-only screenshots separate from any user-facing evidence set.
+
+### Root-cause before logging
+
+Before recording something as blocked or "no data," root-cause it via the
+actual network request/response (not just the rendered UI) and retry with
+more than one input combination or a fresh session, so a defect entry
+reflects a reproducible root cause rather than a one-off fluke or a missing
+capability.
+
+Ant Design/virtualized-UI quirks, browser-driving mechanics, and
+session-handling specifics live in `../user-manual-update/gotchas.md`
+(see Prerequisites and Subagent Dispatch Rules below) rather than being
+duplicated here — that file is a sibling skill's file within this same
+repo, not an external dependency.
+
 ## Prerequisites
 
 - A live, human-authenticated browser session via the project's configured
@@ -36,8 +147,8 @@ Do not import that tool's read-only restriction here.
 - That tool must be able to capture raw network requests/responses
   correlated to the action that triggered them — this is not optional
   instrumentation, it's what Executor's evidence, Traceability, and
-  Defect-Triage's root-causing all depend on (see the global instructions'
-  root-cause rule and Stage 5's network-capture instruction). Confirm this
+  Defect-Triage's root-causing all depend on (see the "Root-cause before
+  logging" rule above and Stage 5's network-capture instruction). Confirm this
   capability actually exists before Stage 2 — many browser MCP tools expose
   only navigate/click/snapshot, not network interception. If it isn't
   available, this is a real environment limitation: surface it plainly at
@@ -70,21 +181,22 @@ Do not import that tool's read-only restriction here.
 
 ## Read First, In Order
 
-1. Your global Playwright Full-Coverage Instructions (`~/.claude/CLAUDE.md`)
-   — session/login handling, the Coverage Standard, Dropdowns and
-   Selectable Controls, Search and Filtering, Transaction Testing, Evidence
-   Capture, Ant Design/virtualized-UI quirks, and the AUDIT-LOG.md/
-   FLOWS-LOG.md convention. This skill inherits all of it and does not
-   restate it — read it before starting, not after hitting a gap it would
-   have covered.
+1. "Coverage Standard, Transaction Testing, and Evidence Capture" above —
+   the Coverage Standard, Dropdowns and Selectable Controls, Search and
+   Filtering, Transaction Testing, Evidence Capture, and the full-depth-first
+   ground rule. Session/login handling is covered separately by Prerequisites
+   above and the Subagent Dispatch Rules below; the AUDIT-LOG.md/FLOWS-LOG.md
+   convention is covered by Stage 0 and Stage 10 below — read this section
+   before starting, not after hitting a gap it would have covered.
 2. `../user-manual-update/gotchas.md` — FusionX UI/environment quirks
    already learned (Ant Design virtualization specifics, sticky-header
-   click interception, slow-confirm screens with no progress indicator).
+   click interception, slow-confirm screens with no progress indicator,
+   browser-driving mechanics).
 3. `gotchas.md` (this folder) — functional-testing-specific lessons.
 4. `docs/evidence-and-bug-policy.md` (from `fusionx-test-agent-v0.1.1`, if that
    repo is checked out) — evidence-minimization rules: mask/omit credentials
    and auth data, store the minimum necessary. The Bug Report template's
-   Evidence section and the global Playwright instructions already operationalize
+   Evidence section and the Evidence Capture rules above already operationalize
    this; read the policy doc for the fuller rationale if available.
 5. The Templates section below. If the `fusionx-test-agent-v0.1.1` repo
    happens to be checked out in the current project, its `templates/`
@@ -93,9 +205,9 @@ Do not import that tool's read-only restriction here.
    `run-summary.md`) — prefer those if present, they're the same shapes
    inlined here so this skill works even when that repo isn't available.
 
-Do not skip ahead to running a test round without reading the governing
-Playwright instructions first — every rule in there exists because skipping
-it caused real, repeat-costing gaps in prior sessions.
+Do not skip ahead to running a test round without reading the Coverage
+Standard section first — every rule in there exists because skipping it
+caused real, repeat-costing gaps in prior sessions.
 
 ## Workflow
 
@@ -137,8 +249,8 @@ If the user's answer stays non-specific even after being asked (e.g. "just
 test it thoroughly, whatever you think is important" with no named field,
 rule, or ticket), that is not a blocker to proceed past — it means no
 specific change exists to narrow against, so the "specific change" branch
-below does not apply and the global Playwright instructions' full-depth
-default applies unmodified: Discovery covers the full Coverage Standard
+below does not apply and the "No breadth-only passes" full-depth
+default above applies unmodified: Discovery covers the full Coverage Standard
 across every screen/flow in the named module from the start, not a
 progressively-expanding subset. Record the Test Plan's "Requirement/source"
 field as the plain fact of what was given, e.g. "Ad hoc verbal request —
@@ -173,7 +285,7 @@ spread evenly across an entire module when the source document already
 tells you where the risk is concentrated.
 
 This narrow-then-expand scoping is a deliberate, sanctioned exception to
-the global Playwright instructions' full-depth-first default — it still
+the "No breadth-only passes" full-depth-first default above — it still
 needs the same explicit user sign-off that default requires for any
 narrowed pass. State the narrow scope in the drafted plan's "Scope and
 exclusions" field so the user is approving it at the Stage 4 gate, not
@@ -270,7 +382,7 @@ needs to flag and what the Executor needs to capture.
   open every dropdown anyway to enumerate its options — flagging is just
   noting which ones look config-driven while you're already there) — it is
   not a shortcut that lets you skip opening a control, and it does not
-  defer or replace the full-depth pass the global instructions require.
+  defer or replace the full-depth pass the Coverage Standard above requires.
   Actually chasing down the source screen is Traceability's job (stage 6),
   not Discovery's.
 - A numeric or validated field whose actual expected value or rule changes
@@ -282,7 +394,7 @@ needs to flag and what the Executor needs to capture.
   (e.g. one row per currency), not one row that picks a single
   representative value and calls the field covered. This isn't new scope —
   it's the existing "select every value that changes validation/behavior"
-  rule from the global instructions applied to a field whose branching
+  rule from the Dropdowns and Selectable Controls section above applied to a field whose branching
   driver happens to be a currency/product selector rather than the field's
   own dropdown.
 - A UI language switcher is a selectable control the same as any other, so a
@@ -365,11 +477,11 @@ Dispatch one fresh `Agent` tool call, `subagent_type: "general-purpose"`,
 - That it operates the **same already-authenticated browser session** —
   it must not attempt its own login or assume a fresh unauthenticated
   session.
-- The Transaction Testing rules from the global instructions: full
-  lifecycle testing (create/edit/submit/approve/reject/delete) with
+- The Transaction Testing rules from the Coverage Standard section above:
+  full lifecycle testing (create/edit/submit/approve/reject/delete) with
   disposable UAT data where authorized — this is not a read-only pass.
 - The Dropdowns and Selectable Controls, Search and Filtering, and Evidence
-  Capture rules from the global instructions.
+  Capture rules from the Coverage Standard section above.
 - This skill's own Error Handling section (below) — in particular: never
   click a destructive control merely to inspect it without a disposable
   record; stop at the confirmation dialog (it's fine to open it and
@@ -856,8 +968,8 @@ classification, patch that reference too so the two files don't disagree —
 don't regenerate the whole report, and don't add correction narration into
 either file. Append a new `AUDIT-LOG.md` entry stating the corrected
 classification as the current, correct fact (this is exactly the "a prior
-finding turns out to be wrong" case the global instructions already define
-for this log) — the "why it changed" story belongs only there. The row's
+finding turns out to be wrong" case AUDIT-LOG.md is already used for
+throughout this Workflow) — the "why it changed" story belongs only there. The row's
 Test Plan Status is untouched by this: Classification and Status are
 independent facts about the same row (Status reflects Verifier's confirmed
 functional observation, which didn't change) — a Classification correction
