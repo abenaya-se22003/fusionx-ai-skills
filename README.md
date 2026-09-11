@@ -30,6 +30,34 @@ Skills are auto-invoked by description either way. Plugin install also
 namespaces them as `/fusionx-ai-skills:functional-testing` and
 `/fusionx-ai-skills:user-manual-update`.
 
+## Dependencies (install before first use)
+
+Neither `npx skills add` nor the native plugin installer installs these —
+they're external tools the skills drive, not files inside this repo. Install
+them yourself once per machine before running either skill.
+
+**Both skills** — a live browser session with network-request capture:
+
+```bash
+npm install -g @playwright/cli
+```
+
+Confirm it's reachable with `playwright-cli list`. (A Playwright MCP server
+with equivalent navigate/click/snapshot/network-capture tools works too, if
+that's what the project has configured instead.)
+
+**`user-manual-update` only** — its `scripts/` build the manual `.docx` and
+export/QC it, and require:
+
+- Python 3, plus:
+  ```bash
+  pip install python-docx pywin32
+  ```
+- A real, licensed Microsoft Word desktop install (Windows). `to_pdf_export.py`
+  and `qc_audit.py`'s Word-open check drive real Word over COM automation —
+  python-docx alone cannot produce a file guaranteed to actually open in Word
+  (see `SKILL.md`'s Hard Rules).
+
 ## Skills
 
 - **[`user-manual-update`](skills/user-manual-update/)** — Turns a Jira
