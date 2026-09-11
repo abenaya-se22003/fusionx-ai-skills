@@ -34,21 +34,16 @@ namespaces them as `/fusionx-ai-skills:functional-testing` and
 
 Neither `npx skills add` nor the native plugin installer installs these —
 they're external tools the skills drive, not files inside this repo. Install
-them yourself once per machine before running either skill.
+all of them once per machine, up front, regardless of which skill you end up
+running:
 
-**Both skills** — a live browser session with network-request capture:
-
-```bash
-npm install -g @playwright/cli
-```
-
-Confirm it's reachable with `playwright-cli list`. (A Playwright MCP server
-with equivalent navigate/click/snapshot/network-capture tools works too, if
-that's what the project has configured instead.)
-
-**`user-manual-update` only** — its `scripts/` build the manual `.docx` and
-export/QC it, and require:
-
+- A live browser session with network-request capture:
+  ```bash
+  npm install -g @playwright/cli
+  ```
+  Confirm it's reachable with `playwright-cli list`. (A Playwright MCP server
+  with equivalent navigate/click/snapshot/network-capture tools works too, if
+  that's what the project has configured instead.)
 - Python 3, plus:
   ```bash
   pip install python-docx pywin32
@@ -56,7 +51,12 @@ export/QC it, and require:
 - A real, licensed Microsoft Word desktop install (Windows). `to_pdf_export.py`
   and `qc_audit.py`'s Word-open check drive real Word over COM automation —
   python-docx alone cannot produce a file guaranteed to actually open in Word
-  (see `SKILL.md`'s Hard Rules).
+  (see `user-manual-update/SKILL.md`'s Hard Rules).
+
+`playwright-cli` is used by both skills. The Python/Word toolchain is only
+exercised by `user-manual-update`'s build/export/QC scripts — but installing
+it alongside `playwright-cli` up front means no teammate stalls mid-run
+discovering a missing tool one skill needed and the other didn't.
 
 ## Skills
 
