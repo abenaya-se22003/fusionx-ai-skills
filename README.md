@@ -37,6 +37,8 @@ they're external tools the skills drive, not files inside this repo. Install
 all of them once per machine, up front, regardless of which skill you end up
 running:
 
+- Node.js (18+) — needed to run `npx skills add` itself and to install
+  `playwright-cli` below.
 - A live browser session with network-request capture:
   ```bash
   npm install -g @playwright/cli
