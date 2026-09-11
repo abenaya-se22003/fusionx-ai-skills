@@ -70,8 +70,10 @@ discovering a missing tool one skill needed and the other didn't.
 - **[`user-manual-update`](skills/user-manual-update/)** — Turns a Jira
   ticket or request into a delivered FusionX module user manual (Accounts,
   Cash, Collateral, Lending, SCO, Term Deposit, or a new module): live UAT
-  walkthrough, coverage validation gate, docx build, content/formatting
-  validation gate, delivery.
+  walkthrough, docx build, delivery. Gate A (pre-draft coverage validation)
+  and Gate B (post-build content/formatting validation) are each
+  independently re-verified by a fresh subagent dispatch, not self-graded
+  by the same thread that did the work.
 - **[`functional-testing`](skills/functional-testing/)** — Full QA-style
   functional testing of a FusionX module end to end: transaction-lifecycle
   testing (create/edit/submit/approve/reject/delete, not read-only),
