@@ -39,6 +39,11 @@ running:
 
 - Node.js (18+) — needed to run `npx skills add` itself and to install
   `playwright-cli` below.
+  ```powershell
+  winget install OpenJS.NodeJS.LTS
+  ```
+  (macOS/Linux: install from [nodejs.org](https://nodejs.org) or your usual
+  version manager instead.)
 - A live browser session with network-request capture:
   ```bash
   npm install -g @playwright/cli
