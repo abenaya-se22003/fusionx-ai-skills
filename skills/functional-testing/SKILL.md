@@ -138,12 +138,17 @@ repo, not an external dependency.
 ## Prerequisites
 
 - A live, human-authenticated browser session via the project's configured
-  browser-automation tool (e.g. Playwright MCP or `playwright-cli`).
-  Executor, Traceability, Verifier, and Defect-Triage all operate on this
-  same session per the Subagent Dispatch Rules — none of them logs in
-  itself, and none of them uses a browser-tool "attach" command to connect
-  to it (see the Subagent Dispatch Rules for why that specific command is
-  dangerous with `playwright-cli`).
+  browser-automation tool (e.g. Playwright MCP or `playwright-cli`). This is
+  a hard blocker, not optional tooling — Stage 0 cannot proceed without it.
+  If the tool is `playwright-cli`, it is a real CLI, not an MCP server, and
+  is not installed by `npx skills add` or the native plugin install: install
+  it globally yourself before Stage 0 with `npm install -g @playwright/cli`,
+  then confirm it's reachable with `playwright-cli list`. Executor,
+  Traceability, Verifier, and Defect-Triage all operate on this same session
+  per the Subagent Dispatch Rules — none of them logs in itself, and none of
+  them uses a browser-tool "attach" command to connect to it (see the
+  Subagent Dispatch Rules for why that specific command is dangerous with
+  `playwright-cli`).
 - That tool must be able to capture raw network requests/responses
   correlated to the action that triggered them — this is not optional
   instrumentation, it's what Executor's evidence, Traceability, and
