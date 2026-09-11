@@ -113,6 +113,11 @@ sign-off) to run headless.
 - Keep this repo (`fusionx-ai-skills`) scoped to `.claude/` — add new skills
   as `skills/<new-skill-name>/`, new agents as `agents/<new-agent-name>.md`.
   Don't let project-specific working data leak in.
+- Before calling a new skill done, run the self-containment audit (see
+  "Self-containment audit and distribution fixes" below) — grep for any
+  path pointing outside this repo, and confirm every external tool's
+  install command is stated where the skill's own Prerequisites points to
+  it, not left implicit.
 
 ## `functional-testing` skill (built after `user-manual-update`)
 
@@ -184,6 +189,75 @@ follow-up branch:
   unspecified in edge paths, etc.) that the consistency review had no
   reason to look for. Run both when hardening a new addition to an
   already-stable document, not just one or the other.
+
+## Self-containment audit and distribution fixes (this session)
+
+The repo went public-facing this session (`npx skills add` / native plugin
+install instructions added to README, meant for the wider team, not just the
+original author's machine). That surfaced a class of gap neither skill's
+fresh-subagent validation rounds had ever been positioned to catch, because
+those rounds always ran on the author's own machine with the author's own
+global config already in place — they were testing correctness of the
+workflow, never testing what a genuinely fresh install looks like.
+
+- **Found**: `functional-testing/SKILL.md`'s "Read First" step 1 pointed at
+  `~/.claude/CLAUDE.md` — the author's personal global config — for the
+  Coverage Standard, Dropdowns/Selectable Controls, Search/Filtering,
+  Transaction Testing, and Evidence Capture rules, stating "this skill
+  inherits all of it and does not restate it." A teammate installing via
+  `npx skills add` or the plugin gets the repo's files only, never that
+  personal file — so the installed skill was silently missing its own core
+  operating rules for anyone but the author.
+- **Fix**: inlined all of it directly into `functional-testing/SKILL.md` as
+  a new top-level section, mirroring the self-contained treatment
+  `user-manual-update/SKILL.md` already had (it already inlined its own
+  Coverage Standard and stated "this skill is self-contained" explicitly —
+  `functional-testing` was just never given the same pass). Updated every
+  internal cross-reference (8 spots) that pointed at "the global
+  instructions" to point at the new inlined section instead.
+- **Found a second layer**: even after that fix, `playwright-cli` itself —
+  a required external CLI tool, not a repo file — was undocumented as an
+  install step anywhere `functional-testing` itself blocks on it. The only
+  install command (`npm install -g @playwright/cli`) lived in
+  `user-manual-update/gotchas.md`, which `functional-testing`'s own
+  Prerequisites explicitly calls "not a hard dependency" — inconsistent,
+  since a capable browser tool is a hard Stage-0 blocker for
+  `functional-testing` specifically.
+- **Fix**: stated the install command directly in `functional-testing`'s own
+  Prerequisites, not deferred to a sibling skill's optional file.
+- **Fix**: added a README "Dependencies" section listing every external tool
+  either skill needs, install command included, as one flat common list
+  (not split per-skill) — Node.js (`winget install OpenJS.NodeJS.LTS`),
+  `playwright-cli` (`npm install -g @playwright/cli`), Python +
+  `python-docx`/`pywin32` (`pip install python-docx pywin32`), and a real
+  licensed MS Word desktop install (`user-manual-update`'s
+  `to_pdf_export.py`/`qc_audit.py` drive real Word over COM — no
+  installable substitute).
+
+**Lesson for the next skill**: "self-contained" is a claim that needs its
+own explicit check, separate from the fresh-subagent functional-correctness
+rounds in the Process section above — those rounds share the author's
+already-configured environment by construction, so they cannot surface a
+missing external file or tool. Before calling a new skill done, explicitly
+audit two things a normal validation round won't: (1) grep the skill's own
+files for any path/reference pointing outside this repo (`~/`, another
+repo, a personal config file) and either inline it or mark it plainly
+optional; (2) list every external *tool* (not file) the skill's
+instructions assume is already installed, and make sure the install command
+for each one is stated somewhere the skill's own Prerequisites points to
+directly — not left to a reader to infer from a script's import statement
+or a sibling skill's "by the way" note.
+
+## Next up: URS skill
+
+The next skill to build is for URS (User Requirement Specification) — not
+yet scoped. Follow the Process section above: invoke
+`superpowers:brainstorming`/`superpowers:writing-skills` first, gather
+existing URS source material (templates, prior URS docs, any project
+convention already in use) before drafting, and run the self-containment
+audit above as a first-class step this time — not a follow-up pass
+discovered after the repo already went out to the team, as happened with
+`functional-testing` this session.
 
 ## Where the deeper history lives
 
