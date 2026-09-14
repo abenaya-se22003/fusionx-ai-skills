@@ -59,11 +59,11 @@ comfortably-passing and one comfortably-failing value will miss them.
 
 ## Browser-driving basics live in the base gotchas file
 
-`playwright-cli` defaults to headless (`--headed` required), a small
-default window (`resize`, never `--start-maximized`, which crashes real
-apps), the `attach` command reliably killing a self-opened session, and
-`playwright-cli screenshot`/snapshot files saving relative to their own
-invocation directory are all documented in
+`playwright-cli` defaults to headless (`--headed` required). Browser window
+size, maximization, and resizing are deliberately left to the user; the
+skill must not alter them automatically. The `attach` command reliably kills
+a self-opened session, and `playwright-cli` screenshot/snapshot files save
+relative to their invocation directory. These are documented in
 `../user-manual-update/gotchas.md`'s "Finding and driving the browser"
 section — read it before dispatching any role that touches the browser.
 The `attach` bug in particular was the single biggest blocker in this
