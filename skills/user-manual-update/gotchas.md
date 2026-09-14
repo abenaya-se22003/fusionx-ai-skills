@@ -32,11 +32,12 @@ read this alongside `SKILL.md`.
   (login, MFA, watching the automation); discovering this after the fact
   means the human was staring at nothing while the automation waited
   silently for a login it couldn't ask for.
+- Browser window size, maximization, and resizing are intentionally left to
+  the user. Skills must not automatically maximize, resize, or force a
+  viewport size just to make a FusionX screen fit.
 - A headed browser window may launch successfully but not be visibly on top.
-  Force it to the foreground via PowerShell:
-  `Get-Process | Where-Object { $_.MainWindowTitle -like "*<title fragment>*" }`
-  then `ShowWindow`/`SetForegroundWindow` via a small `Add-Type` P/Invoke
-  block. Don't assume `--headed` alone guarantees visibility.
+  Force it to the foreground via PowerShell only when explicitly needed for
+  user interaction; do not change its size as part of this step.
 - Sidebar clicks often fail silently from an intercepting sticky
   header/overlay. Don't retry the click — dump every sidebar item's real
   route in one shot (`document.querySelectorAll('.<sidebar-item-class>')`,
@@ -64,22 +65,6 @@ read this alongside `SKILL.md`.
   Traceability/Verifier/Defect-Triage dispatches on the same session, with
   zero further session loss once `attach` was removed from every dispatch
   prompt.
-- Don't reach for a `--config` file with `launchOptions.args:
-  ["--start-maximized"]` + `contextOptions.viewport: null` to get a "real"
-  maximized OS window instead of the small default launch size. Confirmed
-  by direct testing across multiple launch methods: that specific
-  combination crashed the browser session against a real FusionX app
-  within under a minute every time, while surviving 150+ seconds without
-  issue on a lightweight test page (example.com) — a launch config that's
-  safe on a placeholder site is not proof it's safe against a heavier real
-  app; suspect any non-default `launchOptions`/`contextOptions` first if a
-  session becomes unstable and the cause isn't obvious. Use `playwright-cli
-  resize <w> <h>` (e.g. `1920 1080`) right after `open --headed` instead —
-  it sets a large viewport via CDP, which solves the actual "layout looks
-  wrong in a small viewport" problem without the window-chrome crash risk;
-  a plain `resize` call with no custom launch args ran stable for 10+
-  minutes of continuous use against the same FusionX app in the same
-  session.
 - `playwright-cli screenshot --filename=<name>.png` (and default snapshot
   files) save relative to wherever the `playwright-cli` process itself was
   launched from, not necessarily the project folder you expect — this
@@ -100,7 +85,7 @@ read this alongside `SKILL.md`.
   starts a **second**, independently-controllable window — while the
   first, orphaned one is still sitting there too. `playwright-cli kill-all`
   clearing daemon *registrations* does not guarantee the underlying Chrome
-  *process* actually exits. Before reopening after any suspected crash,
+  process actually exits. Before reopening after any suspected crash,
   confirm how many browser windows are
   actually visible on screen rather than assuming a dead daemon means a
   dead window — especially before opening a replacement while a human might
@@ -201,8 +186,8 @@ language), a hand-assembled list of phrasings will miss real instances worded
 
 - A "gap" found via a coverage log or Outstanding Items file is not proven
   until checked against the manual's actual text — the tracking doc can be
-  the thing that's incomplete, not the manual. Grep the actual `.docx` for
-  the action/field name before reporting a docx edit is needed.
+  the thing that's incomplete, not the manual. Grep the actual `.docx` for the
+  action/field name before reporting a docx edit is needed.
 - When a QC script's heading range is left too wide (e.g. no `--end-heading`,
   checking to end of document), it will correctly surface real defects
   outside the current task's scope. That's not a bug in the check — confirm
