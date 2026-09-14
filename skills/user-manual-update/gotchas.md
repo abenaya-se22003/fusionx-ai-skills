@@ -1,5 +1,15 @@
 # Gotchas — Environment, Session, and Subtle Content Bugs
 
+## Mandatory shared browser-session contract
+
+Before any browser interaction, read and follow:
+
+`../../shared/browser-session.md`
+
+This is the canonical contract for browser launch, viewport, session reuse,
+session lifecycle, and recovery. The skill-specific lessons below may add
+useful context, but must not override the shared contract.
+
 Collected across the Collateral, Accounts, Lending, SCO, Term Deposit, and
 Cash module updates. These are operational/environment lessons not restated
 in SKILL.md's "Coverage Standard" or "Manual Production Rules" sections —
