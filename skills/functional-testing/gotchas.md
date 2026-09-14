@@ -1,5 +1,15 @@
 # Functional Testing — Gotchas
 
+## Mandatory shared browser-session contract
+
+Before any browser interaction, read and follow:
+
+`../../shared/browser-session.md`
+
+This is the canonical contract for browser launch, viewport, session reuse,
+session lifecycle, and recovery. The skill-specific lessons below may add
+useful context, but must not override the shared contract.
+
 Operational lessons specific to this skill. FusionX UI/environment quirks
 that apply to any Playwright walkthrough of this system (Ant Design
 virtualized dropdowns, sticky-header click interception, slow-confirm
@@ -17,8 +27,7 @@ element that a prior round successfully located:
 - Don't conclude the feature was removed. Treat it as "possibly moved" and
   re-derive it live (search the current screen, don't assume the old
   snapshot is still accurate).
-- Record what actually happened in `AUDIT-LOG.md` either way — "element
-  moved from X to Y after release Z" is exactly the kind of correction that
+- Record what actually happened in `AUDIT-LOG.md` either way — "element moved from X to Y after release Z" is exactly the kind of correction that
   log exists for, and it prevents the next round from repeating the same
   confused search.
 - Don't silently update `DATA-LINEAGE.md`'s row without noting the change —
