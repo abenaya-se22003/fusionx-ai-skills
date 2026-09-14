@@ -4,7 +4,7 @@
 
 Before any browser interaction, read and follow:
 
-`../../shared/browser-session.md`
+`references/browser-session.md`
 
 This is the canonical contract for browser launch, viewport, session reuse,
 session lifecycle, and recovery. The skill-specific lessons below may add
