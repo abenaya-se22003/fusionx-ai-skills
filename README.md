@@ -30,6 +30,31 @@ Skills are auto-invoked by description either way. Plugin install also
 namespaces them as `/fusionx-ai-skills:functional-testing` and
 `/fusionx-ai-skills:user-manual-update`.
 
+## Update
+
+If you installed the skills with `npx skills`, **do not reinstall them when
+the repo changes**. Pull the latest versions with:
+
+```bash
+npx skills update
+```
+
+This updates the installed skills that have changed. The browser-session
+contract is packaged inside each browser-dependent skill, so it is updated
+alongside the skill itself.
+
+For contributors changing the canonical shared browser contract, run:
+
+```bash
+python scripts/sync-shared.py
+```
+
+Use `--check` in CI or before committing to detect drift:
+
+```bash
+python scripts/sync-shared.py --check
+```
+
 ## Dependencies (install before first use)
 
 Neither `npx skills add` nor the native plugin installer installs these —
