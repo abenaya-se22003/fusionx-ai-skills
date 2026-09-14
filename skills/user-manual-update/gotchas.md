@@ -4,7 +4,7 @@
 
 Before any browser interaction, read and follow:
 
-`../../shared/browser-session.md`
+`references/browser-session.md`
 
 This is the canonical contract for browser launch, viewport, session reuse,
 session lifecycle, and recovery. The skill-specific lessons below may add
@@ -117,7 +117,7 @@ No dialog, no error text, no navigation. Don't keep retrying the click or its
 event sequence — check `playwright-cli requests`/`console` first. Zero new
 network requests after the click means the click isn't registering (a
 UI/selector problem — keep debugging the click). A request that fires but
-does nothing means the app's own handler is broken (a real defect — stop
+ does nothing means the app's own handler is broken (a real defect — stop
 retrying, log it). Rule out a session-wide cause fast by trying the identical
 action on a different, already-working screen in the same session.
 
@@ -191,11 +191,11 @@ action on a different, already-working screen in the same session.
 
 When hunting for every instance of a banned pattern (e.g. defect-log
 language), a hand-assembled list of phrasings will miss real instances worded
-differently. Find the smallest substring that's actually invariant across
-every known real instance (for this project: the case-insensitive substring
+ differently. Find the smallest substring that's actually invariant across
+ every known real instance (for this project: the case-insensitive substring
 `"defect log"`) and grep for exactly that — including table cells, not just
 `doc.paragraphs`, since the same violation can hide in a Version Control
-table's own change-description cell.
+ table's own change-description cell.
 
 ## Gap-hunting discipline
 
