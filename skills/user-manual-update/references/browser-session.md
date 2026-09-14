@@ -7,22 +7,24 @@ This file is the canonical browser-session contract for every skill in this repo
 - Run `playwright-cli list` before creating a new browser session.
 - Run `playwright-cli tab-list` when needed to inspect tabs in the reusable session.
 - Reuse an existing authenticated session instead of creating another one.
-- Never create a replacement session just because the current session needs a viewport fix.
+- Never create a replacement session just because the browser window needs to be resized or repositioned.
 
 ## 2. Standard launch
 
 For a new browser session:
 
 ```bash
-playwright-cli open --headed <url>
-playwright-cli resize 1920 1080
+playwright-cli open --headed --browser chrome <url>
 ```
 
+- Launch Google Chrome explicitly with `--browser chrome`; do not rely on the CLI default browser.
 - Keep the browser headed when the user needs to log in or complete MFA.
-- Always set the Playwright viewport explicitly after opening the headed browser.
-- Do not use `--start-maximized` in launch configuration.
-- Do not use `contextOptions.viewport: null` as a workaround.
-- Do not assume OS-level window maximization equals a 1920x1080 Playwright viewport.
+- Do not configure automatic maximization, forced window sizing, or a custom viewport as part of the skill launch.
+- Leave browser window size, maximization, and resizing to the user.
+- Do not use `--start-maximized`.
+- Do not use `contextOptions.viewport: null` as a workaround for a browser-launch problem.
+- Do not use `playwright-cli resize` as part of the skill's normal browser setup.
+- Do not silently change the user's browser window size just to make a page fit better.
 
 ## 3. Session reuse
 
@@ -53,12 +55,13 @@ playwright-cli -s=<session> <command>
 - If a session becomes detached or an orphaned window appears, inspect `playwright-cli list` and `playwright-cli tab-list` first and reuse the existing session.
 - Do not blindly attach, reopen, or spawn another session.
 - If the browser state is genuinely unusable, stop and surface the problem before replacing the session.
+- Do not treat a small or resized browser window as a reason to replace the session.
 
 ## 7. Evidence
 
 - Use absolute paths for screenshots and snapshots when writing artifacts.
-- Capture evidence at the required viewport after `playwright-cli resize 1920 1080`.
-- Do not treat evidence captured from an accidentally small or windowed viewport as final.
+- Capture evidence using the browser viewport currently chosen by the user.
+- Do not resize or maximize the browser solely for evidence capture.
 
 ## 8. Precedence
 

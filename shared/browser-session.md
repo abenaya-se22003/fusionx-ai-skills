@@ -14,9 +14,10 @@ This file is the canonical browser-session contract for every skill in this repo
 For a new browser session:
 
 ```bash
-playwright-cli open --headed <url>
+playwright-cli open --headed --browser chrome <url>
 ```
 
+- Launch Google Chrome explicitly with `--browser chrome`; do not rely on the CLI default browser.
 - Keep the browser headed when the user needs to log in or complete MFA.
 - Do not configure automatic maximization, forced window sizing, or a custom viewport as part of the skill launch.
 - Leave browser window size, maximization, and resizing to the user.
