@@ -27,8 +27,8 @@ npx skills add r4ge-quit/fusionx-ai-skills
 ```
 
 Skills are auto-invoked by description either way. Plugin install also
-namespaces them as `/fusionx-ai-skills:functional-testing` and
-`/fusionx-ai-skills:user-manual-update`.
+namespaces them as `/fusionx-ai-skills:functional-testing`,
+`/fusionx-ai-skills:user-manual-update`, and `/fusionx-ai-skills:fusionx-urs`.
 
 ## Update
 
@@ -83,12 +83,16 @@ running:
 - A real, licensed Microsoft Word desktop install (Windows). `to_pdf_export.py`
   and `qc_audit.py`'s Word-open check drive real Word over COM automation —
   python-docx alone cannot produce a file guaranteed to actually open in Word
-  (see `user-manual-update/SKILL.md`'s Hard Rules).
+  (see `user-manual-update/SKILL.md`'s Hard Rules). `fusionx-urs`'s own
+  `get_page_numbers.ps1` and Pass-2 visual-verification step rely on the same
+  Word-COM toolchain.
 
-`playwright-cli` is used by both skills. The Python/Word toolchain is only
-exercised by `user-manual-update`'s build/export/QC scripts — but installing
-it alongside `playwright-cli` up front means no teammate stalls mid-run
-discovering a missing tool one skill needed and the other didn't.
+`playwright-cli` is used by all three skills (for `fusionx-urs`, only when a
+live UAT walkthrough is needed to ground a story — see its SKILL.md STEP 1.5).
+The Python/Word toolchain is exercised by `user-manual-update`'s and
+`fusionx-urs`'s build/export/QC scripts — but installing it alongside
+`playwright-cli` up front means no teammate stalls mid-run discovering a
+missing tool one skill needed and another didn't.
 
 ## Skills
 
@@ -106,6 +110,14 @@ discovering a missing tool one skill needed and the other didn't.
   comes from), and optional source-code cross-verification. Runs a 5-role
   subagent pipeline (Executor, Traceability, Verifier, Source-Verifier,
   Defect-Triage) per round, gated by an upfront round-type choice.
+- **[`fusionx-urs`](skills/fusionx-urs/)** — Writes a FusionX User
+  Requirement Specification (URS) .docx from a scope statement: module
+  reference lookup across all 8 FusionX modules plus OBIE Open Banking specs,
+  an elicitation pass before drafting, a cognitive quality pass (ambiguity,
+  assumption, edge-case, conflict, gap checks) on the drafted requirements,
+  and a two-pass validation gate (content, then seventeen automated
+  XML-structural checks against the generated .docx) before the file is
+  presented.
 
 More skills are planned as other BA-support activities come up
 (requirement-gathering support, etc.).
