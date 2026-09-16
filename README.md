@@ -28,7 +28,8 @@ npx skills add r4ge-quit/fusionx-ai-skills
 
 Skills are auto-invoked by description either way. Plugin install also
 namespaces them as `/fusionx-ai-skills:functional-testing`,
-`/fusionx-ai-skills:user-manual-update`, and `/fusionx-ai-skills:fusionx-urs`.
+`/fusionx-ai-skills:user-manual-update`, `/fusionx-ai-skills:fusionx-urs`,
+and `/fusionx-ai-skills:api-field-mapper`.
 
 ## Update
 
@@ -83,7 +84,7 @@ running:
   behavior.
 - Python 3, plus:
   ```bash
-  pip install python-docx pywin32 PyMuPDF
+  pip install python-docx pywin32 PyMuPDF openpyxl requests
   ```
 - A real, licensed Microsoft Word desktop install (Windows). `to_pdf_export.py`
   and `qc_audit.py`'s Word-open check drive real Word over COM automation —
@@ -123,6 +124,11 @@ missing tool one skill needed and another didn't.
   and a two-pass validation gate (content, then seventeen automated
   XML-structural checks against the generated .docx) before the file is
   presented.
+
+- **[`api-field-mapper`](skills/api-field-mapper/)** maps fields in a FusionX
+  Master Data/API Requirements document to Swagger/OpenAPI operations or
+  live-captured dropdown and create/save traffic, then renders an auditable
+  Excel workbook with confidence levels and raw lookup responses.
 
 More skills are planned as other BA-support activities come up
 (requirement-gathering support, etc.).

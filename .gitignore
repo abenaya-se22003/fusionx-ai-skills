@@ -2,3 +2,5 @@ settings.local.json
 scheduled_tasks.lock
 .playwright-cli/
 .worktrees/
+__pycache__/
+*.py[cod]

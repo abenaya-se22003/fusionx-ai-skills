@@ -10,6 +10,7 @@ TARGETS = [
     ROOT / "skills" / "fusionx-urs" / "references" / "browser-session.md",
     ROOT / "skills" / "functional-testing" / "references" / "browser-session.md",
     ROOT / "skills" / "user-manual-update" / "references" / "browser-session.md",
+    ROOT / "skills" / "api-field-mapper" / "references" / "browser-session.md",
 ]
 
 

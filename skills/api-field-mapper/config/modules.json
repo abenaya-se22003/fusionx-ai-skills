@@ -1,0 +1,26 @@
+{
+  "lending": {
+    "display_name": "Lending",
+    "swagger_sources": [],
+    "live_app": {
+      "tenant": "",
+      "dashboard_url": ""
+    }
+  },
+  "casa": {
+    "display_name": "CASA",
+    "swagger_sources": [],
+    "live_app": {
+      "tenant": "",
+      "dashboard_url": ""
+    }
+  },
+  "td": {
+    "display_name": "Term Deposit (TD)",
+    "swagger_sources": [],
+    "live_app": {
+      "tenant": "",
+      "dashboard_url": ""
+    }
+  }
+}
