@@ -91,19 +91,8 @@ Identify the following from the scope statement. If any are missing, ask **all a
 | Version | Default: 0.1 |
 | Release Date | Today's date in DD/MM/YYYY format |
 | Related Jira ticket (PF-XXXXX) | Default: [TO BE CONFIRMED] |
-| Test-data mode | Ask the user to choose one of the three modes below before drafting; if values were already supplied, record `Specific user-provided data` |
 
 Do **not** ask for what you can infer from the scope statement.
-
-Include the test-data choice in the same single intake message as other missing metadata:
-
-1. **Synthetic data** — create production-like synthetic values for all fields.
-2. **Specific user-provided data** — the user supplies one or more exact values; use compatible synthetic data for all remaining fields.
-3. **Approved internal-system data** — use authorised values from an internal source, with source and retrieval date recorded.
-
-Do not start a synthetic-data round until the user chooses a mode. This prevents a second wait when
-they intend to test a particular account, product, customer type, or existing record. If the user
-selects option 2, ask for every required value in one batch; partial values are allowed.
 
 ---
 
@@ -916,41 +905,6 @@ https://miro.com/app/board/uXjVPOGFdEE=/  [Miro flow diagrams — FusionX, if re
 
 Generate 6–12 testable scenarios as a bullet list, each in `[scenario] → [expected outcome]` form.
 At V0.1 draft this may be left as `[Test scenarios to be defined]` if the user prefers to defer it.
-
-### Test Data — required whenever scenarios are included
-
-The Data Dictionary's `Sample Data` column is an illustrative value, not an executable test-data
-set. When Section 11 contains scenarios, add a **Test Data Matrix** immediately after it (or attach
-it as a CSV/XLSX companion when it would make the URS unreadable). Give each dataset a stable ID
-(`TD-001`, `TD-002`, …), scenario IDs it supports, field/value pairs, setup/preconditions, and
-expected result/status. Cover happy path, boundary, invalid, unauthorized, duplicate/concurrency,
-and maker-checker cases that apply to the feature.
-
-Use the test-data mode selected during intake. If **Synthetic data** was selected but a later
-scenario genuinely requires a pre-existing account, configured product/rule, historical
-transaction, or relationship that cannot safely be synthesised, stop that scenario and ask the
-user to provide the minimal required values or switch to approved internal-system data. Do not
-silently substitute a real record.
-
-Partial data is valid and expected. Treat each user-provided field as an immutable input for that
-dataset, record its provenance as `User-provided`, and generate or retrieve only the missing fields.
-Preserve all stated relationships and validations: if a supplied account number implies a branch,
-currency, customer type, or product, obtain those dependent values from an authorized source or
-create compatible synthetic values. If a supplied value is incompatible with the requested
-scenario, flag the conflict and ask for a replacement rather than silently changing it.
-
-You may create **synthetic production-like data** for the Synthetic mode, and for fields the user has not supplied in a mixed dataset: use realistic
-formats, valid check digits/lengths where applicable, internally consistent product/customer/account
-relationships, and values that exercise the stated business rules. Clearly label it `Synthetic`.
-You may also use **approved internal system data** supplied by the user or retrieved through an
-authorized internal connection; label it `Internal system data`, state its source screen/report and
-retrieval date, and minimise it to the fields needed for the scenario. Never include passwords,
-tokens, account credentials, national IDs, customer names/contact details, or unmasked production
-financial data. Substitute or mask those fields while preserving the rule-relevant format.
-
-Do not defer test data merely because the URS is V0.1 unless the user explicitly requests deferral.
-If a required reference/master-data value cannot be obtained or safely synthesised, record it as an
-Open Question with the owning team and the exact dataset/scenario it blocks.
 
 Before picking which scenarios to include, work through these 7 categories (adapted from
 `olbboy/BA-Kit`'s test-design system) against the actual fields and rules just drafted in Section

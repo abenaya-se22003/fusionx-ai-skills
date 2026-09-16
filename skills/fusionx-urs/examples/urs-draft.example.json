@@ -10,6 +10,5 @@
   "open_questions": [["OQ-001", "Which roles may approve configurations?", "Product Owner", "Open"]],
   "stories": [{"title": "Create alert configuration", "user_function": "Configuration Officer", "trigger": "Officer selects Create", "preconditions": "Alert event exists", "action": "Enter values and submit", "expected": "Configuration is submitted for approval"}],
   "data_dictionary": [["Alert Configuration", "Event Code", "Dropdown", "Internal event master", "Configured event", "PAYMENT_POSTED", "Mandatory", "N/A"]],
-  "test_scenarios": [["TS-001", "Submit a valid configuration", "Configuration is pending approval"], ["TS-002", "Submit without Event Code", "Validation blocks submission"]],
-  "test_data": [["TD-001", "Synthetic", "TS-001", "Event Code=PAYMENT_POSTED; Channel=SMS", "Synthetic configuration officer has create permission", "Pending approval"], ["TD-002", "Internal system data", "TS-002", "Event Code=<blank>", "Event master source: Alert Event screen; retrieved 16/09/2026", "Mandatory validation shown"], ["TD-003", "Mixed", "TS-001", "Account Number=00987654321 [User-provided]; Currency=LKR [Synthetic]", "User supplied the account number; synthetic currency is compatible", "Configuration accepts the supplied account"]]
+  "test_scenarios": [["TS-001", "Submit a valid configuration", "Configuration is pending approval"], ["TS-002", "Submit without Event Code", "Validation blocks submission"]]
 }

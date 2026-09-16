@@ -101,8 +101,6 @@ def main() -> None:
             table(doc, ["Feature", "Field Name", "Data Type", "Source / Retrieve From", "Constraint / Description", "Sample Data", "Data Validation", "Max Length"], data.get("data_dictionary", []))
         elif title == "Test Scenarios":
             table(doc, ["ID", "Scenario", "Expected Outcome"], data.get("test_scenarios", []))
-            doc.add_heading("Test Data Matrix", level=2)
-            table(doc, ["Dataset ID", "Type", "Scenario IDs", "Field / Value", "Setup / Preconditions", "Expected Result"], data.get("test_data", []))
         else:
             value = data.get(key, "")
             if value:

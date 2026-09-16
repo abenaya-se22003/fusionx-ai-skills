@@ -345,6 +345,37 @@ in place — see Stage 9 and Stage 10 — rather than a new entry, unless the
 retest surfaces a genuinely different symptom than the entry describes, in
 which case that different symptom does get its own new entry (Stage 9).
 
+### 1.5 Test-data strategy
+
+Before drafting the Test Plan or creating any UAT record, ask the user to choose exactly one
+test-data strategy in the same intake message as any other unanswered scope questions:
+
+1. **Synthetic / disposable UAT data** — create production-like, disposable records for the round.
+2. **Specific user-provided data** — test one or more exact values supplied by the user; create
+   compatible synthetic/disposable values for every remaining required field.
+3. **Approved internal-system data** — reuse authorised UAT records or master data already in the
+   system; record the source screen/report, retrieval date, and why the record is suitable.
+
+Do not begin a synthetic-data execution round until the user selects a strategy. This lets a user
+who needs a particular account, product, customer type, transaction, or existing record state
+choose it up front instead of waiting for a synthetic attempt to fail.
+
+For option 2, accept partial values. Preserve each supplied value as an immutable test input and
+only generate the missing fields. If it implies dependent data (for example account → customer,
+branch, currency, product, or status), verify those dependencies in UAT or use compatible
+synthetic data; if the requested value cannot support the selected scenario, explain the conflict
+and ask for a replacement rather than changing it. Record each row's provenance in the Test Plan's
+Preconditions/test-data field as `Synthetic`, `User-provided`, `Internal system data`, or `Mixed`.
+
+For option 3, use only data that the user is authorised to access in the current UAT session.
+Minimise it to the scenario, do not expose credentials or unnecessary personal/financial data in
+evidence, and mask sensitive values in all plans, screenshots, logs, and reports. A destructive
+action against a shared record remains subject to the existing disposable-record/confirmation rule.
+
+If the selected strategy cannot establish a required precondition, mark the affected plan row
+`Blocked — TestDataIssue` before execution and ask for the minimum additional value or an approved
+strategy change. Do not silently fall back to another data source.
+
 ### 2. Round-type selection
 
 Ask the user (one question, multiple choice) which round type applies:
