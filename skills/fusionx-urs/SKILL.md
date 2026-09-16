@@ -915,11 +915,16 @@ it as a CSV/XLSX companion when it would make the URS unreadable). Give each dat
 expected result/status. Cover happy path, boundary, invalid, unauthorized, duplicate/concurrency,
 and maker-checker cases that apply to the feature.
 
-Before finalising the matrix, offer the user one concise, batched choice to supply exact test
-values when they matter to the feature: *"Do you want to provide any fixed test values (for example,
-an account number, product code, customer type, or existing record ID)? I can use those values and
-create synthetic or approved internal-system data for every remaining field."* Do not ask again
-when the user has already supplied values or has said to use synthetic data.
+**Default path:** when the user provides no test values, create `Synthetic` production-like data
+for every field and proceed without asking. This is the normal path.
+
+Ask the user one concise, batched question for fixed values only when (a) the user asks to test a
+specific record/value, or (b) synthetic data cannot let a scenario proceed — for example, the flow
+requires a pre-existing account, a currently configured product/rule, a historical transaction,
+or a system relationship that cannot safely be represented synthetically. Ask: *"Synthetic data
+cannot complete these scenarios: [IDs/reason]. Please provide the required value(s), such as an
+account number or product code, or confirm that I may retrieve approved internal-system data."*
+Do not ask again when the user has supplied values or confirmed synthetic data is sufficient.
 
 Partial data is valid and expected. Treat each user-provided field as an immutable input for that
 dataset, record its provenance as `User-provided`, and generate or retrieve only the missing fields.
@@ -928,7 +933,7 @@ currency, customer type, or product, obtain those dependent values from an autho
 create compatible synthetic values. If a supplied value is incompatible with the requested
 scenario, flag the conflict and ask for a replacement rather than silently changing it.
 
-You may create **synthetic production-like data** for fields the user has not supplied when actual values are unavailable: use realistic
+You may create **synthetic production-like data** by default, and for fields the user has not supplied in a mixed dataset: use realistic
 formats, valid check digits/lengths where applicable, internally consistent product/customer/account
 relationships, and values that exercise the stated business rules. Clearly label it `Synthetic`.
 You may also use **approved internal system data** supplied by the user or retrieved through an

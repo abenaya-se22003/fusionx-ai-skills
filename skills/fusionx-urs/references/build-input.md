@@ -12,3 +12,7 @@ user-provided account number and synthetic/internal values for the remaining for
 the source beside each value (for example, `Account Number=12345 [User-provided]`; `Currency=LKR
 [Synthetic]`). For internal data, put source and retrieval date in setup/preconditions; mask
 sensitive values.
+
+Use `Synthetic` as the default row type when no test values are supplied. Use `User-provided` or
+`Mixed` only when the user asks to test a specific value, or when synthetic data cannot establish a
+required existing state or relationship for the scenario.
