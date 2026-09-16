@@ -130,20 +130,18 @@ reflects a reproducible root cause rather than a one-off fluke or a missing
 capability.
 
 Ant Design/virtualized-UI quirks, browser-driving mechanics, and
-session-handling specifics live in `../user-manual-update/gotchas.md`
-(see Prerequisites and Subagent Dispatch Rules below) rather than being
-duplicated here — that file is a sibling skill's file within this same
-repo, not an external dependency.
+session-handling specifics live in `references/browser-gotchas.md` (see
+Prerequisites and Subagent Dispatch Rules below). This file is bundled with
+Functional Testing; do not rely on another installed skill.
 
 ## Prerequisites
 
-- A live, human-authenticated browser session via the project's configured
-  browser-automation tool (e.g. Playwright MCP or `playwright-cli`). This is
-  a hard blocker, not optional tooling — Stage 0 cannot proceed without it.
-  If the tool is `playwright-cli`, it is a real CLI, not an MCP server, and
-  is not installed by `npx skills add` or the native plugin install: install
-  it globally yourself before Stage 0 with `npm install -g @playwright/cli`,
-  then confirm it's reachable with `playwright-cli list`. Executor,
+- A live, human-authenticated `playwright-cli` browser session. This is a
+  hard blocker, not optional tooling — Stage 0 cannot proceed without it.
+  `playwright-cli` is a real CLI, not an MCP server, and is not installed by
+  `npx skills add` or the native plugin install: install it globally before
+  Stage 0 with `npm install -g @playwright/cli`, then confirm it is reachable
+  with `playwright-cli list`. Executor,
   Traceability, Verifier, and Defect-Triage all operate on this same session
   per the Subagent Dispatch Rules — none of them logs in itself, and none of
   them uses a browser-tool "attach" command to connect to it (see the
@@ -154,8 +152,7 @@ repo, not an external dependency.
   instrumentation, it's what Executor's evidence, Traceability, and
   Defect-Triage's root-causing all depend on (see the "Root-cause before
   logging" rule above and Stage 5's network-capture instruction). Confirm this
-  capability actually exists before Stage 2 — many browser MCP tools expose
-  only navigate/click/snapshot, not network interception. If it isn't
+  capability actually exists before Stage 2. If it isn't
   available, this is a real environment limitation: surface it plainly at
   Stage 0, the same as any other blocker, and let the user decide whether
   to proceed with UI-observable evidence only (state this limitation in
@@ -178,11 +175,8 @@ repo, not an external dependency.
   `FUNCTIONAL-TEST-PLAN-<topic>.md` at Stages 3–4, and writes
   `TEST-EXECUTION-REPORT-<round-id>.md` plus updates `FLOWS-LOG.md` and
   `AUDIT-LOG.md` at Stage 10.
-- `../user-manual-update/gotchas.md` (referenced below) is a sibling
-  skill's file in this same repo, not a hard dependency: if it doesn't
-  exist in a given checkout, note that in the round's plan header and
-  proceed without it — it's supplementary operational knowledge, not
-  something Stage 0 blocks on.
+- `references/browser-gotchas.md` is bundled with this skill and must be
+  available before browser-driving roles are dispatched.
 
 ## Read First, In Order
 
@@ -193,7 +187,7 @@ repo, not an external dependency.
    above and the Subagent Dispatch Rules below; the AUDIT-LOG.md/FLOWS-LOG.md
    convention is covered by Stage 0 and Stage 10 below — read this section
    before starting, not after hitting a gap it would have covered.
-2. `../user-manual-update/gotchas.md` — FusionX UI/environment quirks
+2. `references/browser-gotchas.md` — FusionX UI/environment quirks
    already learned (Ant Design virtualization specifics, sticky-header
    click interception, slow-confirm screens with no progress indicator,
    browser-driving mechanics).
@@ -558,8 +552,7 @@ Dispatch one fresh `Agent` tool call, `subagent_type: "general-purpose"`,
   authorization. The main thread re-dispatches a fresh Executor call for the
   pending rows only, after the event has occurred.
 
-- This explicit instruction, if the configured browser-automation tool is
-  `playwright-cli`: "Any screenshot or snapshot file you save must use an
+- This explicit instruction: "Any screenshot or snapshot file you save must use an
   absolute path (`--filename=<full path>`) inside the target project root
   — `playwright-cli` otherwise saves relative to its own invocation
   directory, not this project's folder. State the actual resulting path in
@@ -661,8 +654,7 @@ Executor or Traceability — it must not see their claimed results, only:
   precondition or environment genuinely prevents execution (missing data,
   screen unreachable, a flagged destructive step with no disposable record),
   not for when the observed behavior simply fails to match expectation,
-  which is REJECTED. If the configured browser-automation tool is
-  `playwright-cli`, save any screenshot/snapshot with an absolute
+  which is REJECTED. Save any screenshot/snapshot with an absolute
   `--filename=<full path>` inside the target project root — it otherwise
   saves relative to its own invocation directory, not this project's
   folder; state the actual resulting path rather than assuming the name
@@ -1211,17 +1203,16 @@ screen and Verification method still describe the source, not the defect.
   already-authenticated browser session established during Discovery
   (stage 3) — none of them attempts its own login or assumes a fresh
   unauthenticated session, and none of them opens a new browser instance.
-  If the tool is `playwright-cli`: use plain `playwright-cli -s=<session>
+  Use plain `playwright-cli -s=<session>
   <command>` calls (`list`, `snapshot`, `tab-list`, etc.) to find and use
   the existing session — never the `attach` command, which is for
   connecting to a browser that's running *externally* to `playwright-cli`
   entirely (`--cdp=`, `--extension`), not for reconnecting to a session
   `playwright-cli` itself already manages via `open`. Calling `attach` on
   a session opened via `open` reliably kills it — see
-  `../user-manual-update/gotchas.md`'s "Finding and driving the browser"
-  section for the full root-caused writeup (exact error text and the
-  evidence the fix holds under sustained use); `gotchas.md` (this skill's
-  own file) only summarizes and points there. This is the single most
+  `references/browser-gotchas.md` for the bundled session-reuse rule;
+  `gotchas.md` (this skill's own file) summarizes its observed impact. This
+  is the single most
   disruptive mistake a dispatch prompt for this skill can make, and it
   looks exactly like an unrelated environment crash until traced back to
   this. Source-Verifier is the only role that never touches the browser at

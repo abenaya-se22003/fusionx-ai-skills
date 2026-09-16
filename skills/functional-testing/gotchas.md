@@ -10,12 +10,9 @@ This is the canonical contract for browser launch, viewport, session reuse,
 session lifecycle, and recovery. The skill-specific lessons below may add
 useful context, but must not override the shared contract.
 
-Operational lessons specific to this skill. FusionX UI/environment quirks
-that apply to any Playwright walkthrough of this system (Ant Design
-virtualized dropdowns, sticky-header click interception, slow-confirm
-screens with no progress indicator) are already documented in
-`../user-manual-update/gotchas.md` — read that first, this file doesn't
-repeat it.
+Operational lessons specific to this skill. Read
+`references/browser-gotchas.md` for the bundled FusionX UI/environment
+quirks that apply to any Playwright walkthrough before dispatching a role.
 
 ## Selector drift after a UI release
 
@@ -57,15 +54,15 @@ that rounds differently depending on convention, or a value one currency
 unit inside vs. outside a threshold); a test plan that only exercises one
 comfortably-passing and one comfortably-failing value will miss them.
 
-## Browser-driving basics live in the base gotchas file
+## Browser-driving basics
 
 `playwright-cli` defaults to headless (`--headed` required). Browser window
 size, maximization, and resizing are deliberately left to the user; the
 skill must not alter them automatically. The `attach` command reliably kills
 a self-opened session, and `playwright-cli` screenshot/snapshot files save
-relative to their invocation directory. These are documented in
-`../user-manual-update/gotchas.md`'s "Finding and driving the browser"
-section — read it before dispatching any role that touches the browser.
+relative to their invocation directory. The full operational details are in
+`references/browser-gotchas.md` — read it before dispatching any role that
+touches the browser.
 The `attach` bug in particular was the single biggest blocker in this
 skill's first live pilot (six consecutive Executor dispatches failed
 before it was root-caused) — every dispatch prompt for Executor,
@@ -92,7 +89,7 @@ Before dispatching a role that depends on the live session, re-run
 several tool calls ago. If a dispatched role reports it can't reach the
 session, the main thread should independently re-verify with its own
 `list` call before concluding it needs to re-authenticate (the daemon can
-die between the role's check and yours). See the base gotchas file above
+die between the role's check and yours). See `references/browser-gotchas.md`
 for orphaned-window and `--persistent` handling.
 
 ## Network capture stays action-correlated

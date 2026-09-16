@@ -1,56 +1,78 @@
-"""Run the 17 required FusionX URS XML checks with one portable command."""
+"""Run the 17 mandatory FusionX URS DOCX checks with one command.
+
+The authoritative implementations live in references/docx-formatting.md so
+the explanation and executable rule cannot silently diverge. This wrapper
+extracts that maintained Python block, runs every check, and returns a
+non-zero exit status on a reported failure or an unexpected checker error.
+"""
 from __future__ import annotations
 
+import contextlib
+import io
 import re
 import sys
-import zipfile
 from pathlib import Path
 
 
-def check(name: str, ok: bool, detail: str) -> bool:
-    print(f"{'PASS' if ok else 'FAIL'} [{name}] {detail}")
-    return ok
+CHECKS = (
+    "check_numbering", "check_numbering_gap", "check_heading_numbering",
+    "check_bullets", "check_second_list_start", "check_body_spacing",
+    "check_section_transitions", "check_front_matter", "check_fonts",
+    "check_colors", "check_table_styles", "check_no_cell_margins",
+    "check_heading_indent_progression", "check_no_docdefault_paragraph_spacing",
+    "check_toc_field_live", "check_toc_page_numbers_real", "check_hex_ids",
+)
 
 
-def main() -> None:
+def load_documented_checks() -> dict[str, object]:
+    reference = Path(__file__).resolve().parents[1] / "references" / "docx-formatting.md"
+    text = reference.read_text(encoding="utf-8")
+    first_check = text.index("def check_numbering(docx_path):")
+    block_start = text.rfind("```python", 0, first_check) + len("```python")
+    # The example invocation follows the final checker; it must not execute.
+    block_end = text.index("\npath = \"./outputs/", first_check)
+    namespace: dict[str, object] = {"__name__": "urs_qc_checks"}
+    exec(compile(text[block_start:block_end], str(reference), "exec"), namespace)
+    missing = [name for name in CHECKS if not callable(namespace.get(name))]
+    if missing:
+        raise RuntimeError(f"Documented QC implementations missing: {', '.join(missing)}")
+    return namespace
+
+
+def main() -> int:
     if len(sys.argv) != 2:
-        raise SystemExit("Usage: python qc_audit.py <path-to-urs.docx>")
-    path = Path(sys.argv[1]).resolve()
-    if not path.is_file():
-        raise SystemExit(f"DOCX not found: {path}")
-    with zipfile.ZipFile(path) as archive:
-        names = set(archive.namelist())
-        doc = archive.read("word/document.xml").decode("utf-8")
-        styles = archive.read("word/styles.xml").decode("utf-8") if "word/styles.xml" in names else ""
-        numbering = archive.read("word/numbering.xml").decode("utf-8") if "word/numbering.xml" in names else ""
+        print("Usage: python qc_audit.py <path-to-urs.docx>", file=sys.stderr)
+        return 2
+    docx = Path(sys.argv[1]).resolve()
+    if not docx.is_file():
+        print(f"DOCX not found: {docx}", file=sys.stderr)
+        return 2
 
-    results = []
-    toc_spans = [(m.start(), m.end()) for m in re.finditer(r'<w:hyperlink w:anchor="_Toc[^>]*>[\s\S]*?</w:hyperlink>', doc)]
-    typed_matches = list(re.finditer(r"<w:t[^>]*>\s*\d+(?:\.\d+){1,4}\.\s", doc))
-    typed = not any(not any(start <= m.start() < end for start, end in toc_spans) for m in typed_matches)
-    results.append(check("numbering", typed and "<w:numPr>" in doc, "no typed multi-level numbers; numPr present"))
-    results.append(check("numbering-gap", 'w:suff w:val="tab"' in numbering, "number levels use tab suffix"))
-    results.append(check("heading-numbering", "Heading1" in styles and "<w:numPr>" in doc, "heading style and numPr present"))
-    results.append(check("bullets", 'w:numFmt w:val="bullet"' in numbering, "bullet numbering definition present"))
-    results.append(check("second-list-start", doc.count("Data Dictionary") > 0 and numbering.count("<w:abstractNum") >= 2, "independent numbering definitions available"))
-    front = all(x in doc for x in ("Table of Content", "List of Figures", "List of Tables", "TOC \\"))
-    results.append(check("front-matter", front, "TOC, LoF, LoT and TOC field present"))
-    results.append(check("section-transitions", "<w:p><w:r><w:t/></w:r></w:p><w:p" not in doc, "no known stacked empty-paragraph pattern"))
-    results.append(check("body-spacing", not re.search(r"(?:<w:p[^>]*>\s*</w:p>\s*){2,}", doc), "no stacked empty body paragraphs"))
-    results.append(check("fonts", "Candara" in styles or "Candara" in doc, "Candara explicitly declared"))
-    results.append(check("colors", "0070C0" in doc and "2F5496" in doc, "cover and heading colours present"))
-    results.append(check("table-styles", "<w:tblStyle" in doc, "all tables require manual review against style list"))
-    results.append(check("no-cell-margins", "<w:tcMar" not in doc, "no direct cell-margin overrides"))
-    results.append(check("heading-indent", "<w:ind " in numbering, "numbering indents present"))
-    defaults = re.search(r"<w:docDefaults>([\s\S]*?)</w:docDefaults>", styles)
-    results.append(check("no-docdefault-spacing", not defaults or "<w:spacing" not in defaults.group(1), "no document-default paragraph spacing"))
-    results.append(check("toc-field-live", "<w:sdt" not in doc and "w:dirty=\"true\"" not in doc, "no stale SDT/dirty TOC wrapper"))
-    pages = re.findall(r'<w:hyperlink w:anchor="_Toc[^>]*>[\s\S]*?<w:t>(\d+)</w:t>', doc)
-    results.append(check("toc-page-numbers", len(set(pages)) > 1, "TOC entries have varying cached page numbers"))
-    ids = re.findall(r'(?:w14:paraId|wp14:anchorId|wp14:editId)="([^"]+)"', doc)
-    results.append(check("hex-ids", all(re.fullmatch(r"[0-9A-Fa-f]{8}", value) for value in ids), "all tracked XML IDs are eight-digit hex"))
-    raise SystemExit(0 if all(results) else 1)
+    try:
+        checks = load_documented_checks()
+    except Exception as exc:
+        print(f"FAIL [qc-loader] Could not load documented checks: {exc}")
+        return 1
+
+    failures: list[str] = []
+    for name in CHECKS:
+        output = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(output):
+                checks[name](str(docx))  # type: ignore[index, operator]
+        except Exception as exc:
+            output.write(f"FAIL: {name} raised {type(exc).__name__}: {exc}\n")
+        result = output.getvalue().rstrip()
+        print(result)
+        if re.search(r"(?:^|\n)FAIL(?:\b|:)", result):
+            failures.append(name)
+
+    if failures:
+        print(f"FAIL [summary] {len(failures)}/17 required checks failed: {', '.join(failures)}")
+        return 1
+    print("PASS [summary] All 17 required DOCX checks passed.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

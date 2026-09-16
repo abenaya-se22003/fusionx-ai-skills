@@ -77,9 +77,10 @@ running:
   ```bash
   npm install -g @playwright/cli
   ```
-  Confirm it's reachable with `playwright-cli list`. (A Playwright MCP server
-  with equivalent navigate/click/snapshot/network-capture tools works too, if
-  that's what the project has configured instead.)
+  Confirm it's reachable with `playwright-cli list`. Whenever a skill uses
+  browser automation, it requires this CLI because its session reuse,
+  tracing, and evidence instructions use named-session and network-capture
+  behavior.
 - Python 3, plus:
   ```bash
   pip install python-docx pywin32 PyMuPDF

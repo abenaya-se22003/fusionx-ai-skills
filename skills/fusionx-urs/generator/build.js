@@ -23,7 +23,7 @@ const numbering={config:[
   {level:2,format:LevelFormat.DECIMAL,text:"%1.%2.%3.",alignment:AlignmentType.START,suffix:LevelSuffix.TAB,style:{paragraph:{indent:{left:720,hanging:720}},run:{font:CANDARA}}},
   {level:3,format:LevelFormat.DECIMAL,text:"%1.%2.%3.%4.",alignment:AlignmentType.START,suffix:LevelSuffix.TAB,style:{paragraph:{indent:{left:900,hanging:900}},run:{font:CANDARA}}}]},
  {reference:"second",levels:[
-  {level:0,format:LevelFormat.DECIMAL,text:"%1.",alignment:AlignmentType.START,suffix:LevelSuffix.TAB,style:{paragraph:{indent:{left:720,hanging:504}},run:{font:CANDARA}}},
+  {level:0,start:7,format:LevelFormat.DECIMAL,text:"%1.",alignment:AlignmentType.START,suffix:LevelSuffix.TAB,style:{paragraph:{indent:{left:720,hanging:504}},run:{font:CANDARA}}},
   {level:1,format:LevelFormat.DECIMAL,text:"%1.%2.",alignment:AlignmentType.START,suffix:LevelSuffix.TAB,style:{paragraph:{indent:{left:1080,hanging:504}},run:{font:CANDARA}}}]},
  {reference:"bullets",levels:[{level:0,format:LevelFormat.BULLET,text:"•",alignment:AlignmentType.START,suffix:LevelSuffix.TAB,style:{paragraph:{indent:{left:360,hanging:360}},run:{font:CANDARA}}}]}
 ]};
@@ -38,19 +38,19 @@ function story(story){const rows=[["User & Function",story.user_function],["Acti
 const title=data.title||"FusionX User Requirement Specification";
 const metadata=[["Document Version",data.version||"0.1"],["Release Date",data.release_date||""],["Number of Pages","[updated by Word]"]];
 const cover=[blank(),blank(),blank(),new Paragraph({border:{bottom:{style:BorderStyle.SINGLE,size:6,space:1,color:"BFBFBF"}},children:[run(title,{size:44,color:COVERBLUE})]}),body("User Requirement Specification"),grid(["Document information","Value"],metadata),blank(),blank(),blank(),new Paragraph({children:[run("LOLC Technologies",{bold:true,size:30,color:"1A0DAB"})]})];
-const front=[new Paragraph({heading:HeadingLevel.HEADING_1,pageBreakBefore:true,children:[run("Table of Content",{size:32,color:HBLUE})]}),new TableOfContents("Table of Content",{hyperlink:true,headingStyleRange:"1-3"}),new Paragraph({heading:HeadingLevel.HEADING_1,children:[run("List of Figures",{size:32,color:HBLUE})]}),new TableOfContents("List of Figures",{hyperlink:true,captionLabelIncludingNumbers:"Figure"}),blank(),new Paragraph({heading:HeadingLevel.HEADING_1,children:[run("List of Tables",{size:32,color:HBLUE})]}),new TableOfContents("List of Tables",{hyperlink:true,captionLabelIncludingNumbers:"Table"})];
+const front=[new Paragraph({heading:HeadingLevel.HEADING_1,pageBreakBefore:true,children:[run("Table of Content",{size:32,color:HBLUE})]}),new TableOfContents("Table of Content",{hyperlink:true,headingStyleRange:"1-3"}),new Paragraph({heading:HeadingLevel.HEADING_1,children:[run("List of Figures",{size:32,color:HBLUE})]}),new TableOfContents("List of Figures",{hyperlink:true,captionLabelIncludingNumbers:"Figure"}),new Paragraph({heading:HeadingLevel.HEADING_1,children:[run("List of Tables",{size:32,color:HBLUE})]}),new TableOfContents("List of Tables",{hyperlink:true,captionLabelIncludingNumbers:"Table"}),blank()];
 const children=[...cover,...front];
 children.push(h1("Document Control",false)); children.push(h2("Document Information")); children.push(grid(["Field","Value"],[["Drafted By",data.drafted_by||""],["Reviewed By",data.reviewed_by||""],["Client Name",data.client||"LOLC Technologies Pvt LTD"],["Related Jira",data.jira||"[TO BE CONFIRMED]"]]));
-children.push(h2("Assumptions")); (data.assumptions||[]).forEach(x=>children.push(bullet(x)));
-children.push(h1("Open Questions")); children.push(grid(["ID","Question","Owner","Status"],data.open_questions||[],true));
-children.push(h1("Overview/Project Description")); children.push(body(data.overview||"[To be completed]"));
+children.push(blank(),h2("Assumptions")); (data.assumptions||[]).forEach(x=>children.push(bullet(x)));
+children.push(blank(),h1("Open Questions")); children.push(grid(["ID","Question","Owner","Status"],data.open_questions||[],true));
+children.push(blank(),h1("Overview/Project Description")); children.push(body(data.overview||"[To be completed]"));
 children.push(h1("Flow Chart")); children.push(body(data.flow_chart||"[To be completed]"));
-children.push(h1("Scope")); children.push(h2("What is in scope")); (data.in_scope||[]).forEach(x=>children.push(bullet(x))); children.push(h2("What is out of scope")); (data.out_of_scope||[]).forEach(x=>children.push(bullet(x)));
-children.push(h1("Epic: Narrative and Statement")); children.push(body(data.epic||"[To be completed]"));
-children.push(h1("Features / Stories")); (data.stories||[]).forEach((s,n)=>{children.push(h2(s.title||`Story ${String(n+1).padStart(2,"0")}`));children.push(story(s));});
-children.push(h1("Data Dictionary",true)); children.push(grid(["Feature","Field Name","Data Type","Source / Retrieve From","Constraint / Description","Sample Data","Data Validation","Max Length"],data.data_dictionary||[],true));
-children.push(h1("E2E Impact Identification Table",true)); children.push(grid(["Area","Impact","Details"],data.e2e_impact||[],true));
-children.push(h1("Diagrams and Examples",true)); children.push(body(data.diagrams||"[To be completed]"));
+children.push(h1("Scope")); children.push(h2("What is in scope")); (data.in_scope||[]).forEach(x=>children.push(bullet(x))); children.push(blank(),h2("What is out of scope")); (data.out_of_scope||[]).forEach(x=>children.push(bullet(x)));
+children.push(blank(),h1("Epic: Narrative and Statement")); children.push(body(data.epic||"[To be completed]"));
+children.push(h1("Features/Stories")); (data.stories||[]).forEach((s,n)=>{children.push(h2(s.title||`Story ${String(n+1).padStart(2,"0")}`));children.push(story(s));});
+children.push(blank(),h1("Data Dictionary",true)); children.push(grid(["Feature","Field Name","Data Type","Source / Retrieve From","Constraint / Description","Sample Data","Data Validation","Max Length"],data.data_dictionary||[],true));
+children.push(blank(),h1("E2E Impact Identification Table",true)); children.push(grid(["Area","Impact","Details"],data.e2e_impact||[],true));
+children.push(blank(),h1("Diagrams and Examples",true)); children.push(body(data.diagrams||"[To be completed]"));
 children.push(h1("Annexure",true)); if(data.annexure){children.push(new Paragraph({children:[new ExternalHyperlink({link:data.annexure,children:[run(data.annexure,{style:"Hyperlink"})]})]}));} else children.push(body("[To be completed]"));
 children.push(h1("Test Scenarios",true)); (data.test_scenarios||[]).forEach(row=>children.push(bullet(Array.isArray(row)?`${row[0]}: ${row[1]} → ${row[2]}`:row)));
 const header=new Header({children:[new Paragraph({alignment:AlignmentType.CENTER,border:{bottom:{style:BorderStyle.SINGLE,size:6,space:1,color:"BFBFBF"}},children:[run("Proprietary and Confidential",{color:"BFBFBF",size:18})]})]});
