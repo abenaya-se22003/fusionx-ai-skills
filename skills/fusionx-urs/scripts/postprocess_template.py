@@ -477,7 +477,18 @@ def merge_field_boundaries(m):
         '<w:r><w:fldChar w:fldCharType="separate"/></w:r>'
     )
     body, n = re.subn(r'</w:pPr>', lambda pm: pm.group(0) + begin_runs, body, count=1)
-    assert n == 1, "first entry paragraph has no pPr to anchor the field begin onto"
+    # docx-js 9.7 can emit the first cached ToC entry without a pPr element. The
+    # older build this script was originally paired with always emitted one, but
+    # that is not an OOXML requirement. Create an empty pPr and anchor the live
+    # field immediately after it; otherwise a clean install fails before QC.
+    if n == 0:
+        body, n = re.subn(
+            r'(<w:p(?:\s[^>]*)?>)',
+            lambda pm: pm.group(1) + '<w:pPr/>' + begin_runs,
+            body,
+            count=1,
+        )
+    assert n == 1, "could not locate first ToC entry paragraph to anchor the field begin"
     if body.endswith(LAST_FIELD_PARA):
         body = body[: -len(LAST_FIELD_PARA)]
         end_run = '<w:r><w:fldChar w:fldCharType="end"/></w:r>'

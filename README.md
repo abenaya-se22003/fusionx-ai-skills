@@ -63,7 +63,11 @@ all of them once per machine, up front, regardless of which skill you end up
 running:
 
 - Node.js (18+) — needed to run `npx skills add` itself and to install
-  `playwright-cli` below.
+  `playwright-cli` below. The URS generator also requires its pinned local
+  `docx` package; after installing the skill, run:
+  ```powershell
+  npm --prefix <installed-skill-path>/generator ci
+  ```
   ```powershell
   winget install OpenJS.NodeJS.LTS
   ```

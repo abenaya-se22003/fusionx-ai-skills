@@ -412,8 +412,9 @@ actually met.
 
 ## STEP 3 — GENERATE .docx ON CONFIRMATION
 
-Once confirmed and Pass 1 of the validation gate is clean, run the bundled generator:
-`python <skill-root>/scripts/build_urs.py <draft-json> --output <output-docx>`.
+Once confirmed and Pass 1 of the validation gate is clean, install the bundled generator once with
+`npm --prefix <skill-root>/generator ci`, then run:
+`node <skill-root>/generator/build.js <draft-json> --output <output-docx>`.
 The input schema is documented in `<skill-root>/references/build-input.md` and an executable
 example is supplied at `<skill-root>/examples/urs-draft.example.json`. Apply LOLC formatting (see DOCX FORMATTING section below)
 **exactly** — don't improvise table styles, column widths, numbering mechanism, or font handling,
@@ -425,7 +426,7 @@ relative to the current project; create `outputs/` if needed.
 third is not optional. Use the scripts in this skill's `scripts/` folder as the starting point,
 don't rederive this logic from prose each time — that's what took many rounds to get right the
 first time:**
-1. `python <skill-root>/scripts/build_urs.py <draft-json> --output <output-docx>` followed by
+1. `node <skill-root>/generator/build.js <draft-json> --output <output-docx>` followed by
    `python <skill-root>/scripts/postprocess_template.py <output-docx>`. Builds the file, including a
    genuinely live ToC/LoF/LoT field with real bookmarks and entries, but only a placeholder page
    number in each entry — pagination can't be computed without an actual layout engine.

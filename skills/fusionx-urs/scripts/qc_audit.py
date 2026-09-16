@@ -25,13 +25,15 @@ def main() -> None:
         numbering = archive.read("word/numbering.xml").decode("utf-8") if "word/numbering.xml" in names else ""
 
     results = []
-    typed = re.search(r"<w:t[^>]*>\s*\d+(?:\.\d+){1,4}\.\s", doc) is None
+    toc_spans = [(m.start(), m.end()) for m in re.finditer(r'<w:hyperlink w:anchor="_Toc[^>]*>[\s\S]*?</w:hyperlink>', doc)]
+    typed_matches = list(re.finditer(r"<w:t[^>]*>\s*\d+(?:\.\d+){1,4}\.\s", doc))
+    typed = not any(not any(start <= m.start() < end for start, end in toc_spans) for m in typed_matches)
     results.append(check("numbering", typed and "<w:numPr>" in doc, "no typed multi-level numbers; numPr present"))
     results.append(check("numbering-gap", 'w:suff w:val="tab"' in numbering, "number levels use tab suffix"))
     results.append(check("heading-numbering", "Heading1" in styles and "<w:numPr>" in doc, "heading style and numPr present"))
     results.append(check("bullets", 'w:numFmt w:val="bullet"' in numbering, "bullet numbering definition present"))
     results.append(check("second-list-start", doc.count("Data Dictionary") > 0 and numbering.count("<w:abstractNum") >= 2, "independent numbering definitions available"))
-    front = all(x in doc for x in ("Table of Content", "List of Figures", "List of Tables", " TOC "))
+    front = all(x in doc for x in ("Table of Content", "List of Figures", "List of Tables", "TOC \\"))
     results.append(check("front-matter", front, "TOC, LoF, LoT and TOC field present"))
     results.append(check("section-transitions", "<w:p><w:r><w:t/></w:r></w:p><w:p" not in doc, "no known stacked empty-paragraph pattern"))
     results.append(check("body-spacing", not re.search(r"(?:<w:p[^>]*>\s*</w:p>\s*){2,}", doc), "no stacked empty body paragraphs"))
@@ -40,7 +42,8 @@ def main() -> None:
     results.append(check("table-styles", "<w:tblStyle" in doc, "all tables require manual review against style list"))
     results.append(check("no-cell-margins", "<w:tcMar" not in doc, "no direct cell-margin overrides"))
     results.append(check("heading-indent", "<w:ind " in numbering, "numbering indents present"))
-    results.append(check("no-docdefault-spacing", not re.search(r"<w:docDefaults>[\s\S]*?<w:spacing", styles), "no document-default paragraph spacing"))
+    defaults = re.search(r"<w:docDefaults>([\s\S]*?)</w:docDefaults>", styles)
+    results.append(check("no-docdefault-spacing", not defaults or "<w:spacing" not in defaults.group(1), "no document-default paragraph spacing"))
     results.append(check("toc-field-live", "<w:sdt" not in doc and "w:dirty=\"true\"" not in doc, "no stale SDT/dirty TOC wrapper"))
     pages = re.findall(r'<w:hyperlink w:anchor="_Toc[^>]*>[\s\S]*?<w:t>(\d+)</w:t>', doc)
     results.append(check("toc-page-numbers", len(set(pages)) > 1, "TOC entries have varying cached page numbers"))
