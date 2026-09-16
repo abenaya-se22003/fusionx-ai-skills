@@ -7,6 +7,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "shared" / "browser-session.md"
 TARGETS = [
+    ROOT / "skills" / "fusionx-urs" / "references" / "browser-session.md",
     ROOT / "skills" / "functional-testing" / "references" / "browser-session.md",
     ROOT / "skills" / "user-manual-update" / "references" / "browser-session.md",
 ]

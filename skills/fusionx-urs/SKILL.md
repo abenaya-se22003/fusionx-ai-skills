@@ -124,13 +124,13 @@ this only helps when there's a real, finished screen to look at:
 - **If the feature's screen(s) already exist live in FusionX UAT and the flow is stable** (not
   mid-development, no pending stepper/field changes before release): ask the user for the FusionX
   UAT URL and do a live walkthrough to ground the User Flow, navigation paths, and Section 7 story
-  details in what's actually there. Check for browser automation access before assuming it's
-  unavailable — a `playwright-cli` command (or `npx playwright cli`) may be reachable via Bash even
-  when no dedicated browser MCP tool is registered; confirm with `playwright-cli --version` (or the
-  npx form) rather than concluding "no Playwright access" from tool-search results alone. Keep the
-  browser visible for the user to log in/complete MFA and wait for their confirmation before
-  touching authenticated screens. Once in, follow the user's own Playwright Full-Coverage standing
-  instructions while walking the flow (full-depth by default not a breadth-only click-through,
+  details in what's actually there. For browser lifecycle, login/MFA, session reuse, viewport, and
+  evidence handling, read and follow `references/browser-session.md`; it is the self-contained,
+  mandatory Playwright contract for this skill. Check for browser automation access before assuming
+  it's unavailable — a `playwright-cli` command (or `npx playwright cli`) may be reachable via Bash
+  even when no dedicated browser MCP tool is registered; confirm with `playwright-cli --version` (or
+  the npx form) rather than concluding "no Playwright access" from tool-search results alone. Once
+  authenticated, walk the flow in full depth by default, not as a breadth-only click-through:
   verify dropdown values via the live DOM not just the accessibility snapshot, no loading-spinner
   races, capture evidence continuously). This is a grounding step, not a full UAT coverage sweep —
   walk the specific flow this story covers, not every adjacent screen.
