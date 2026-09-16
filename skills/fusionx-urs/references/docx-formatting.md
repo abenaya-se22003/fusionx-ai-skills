@@ -6,7 +6,7 @@ kept where at least two of the four files agree; the previous version of this fi
 a single sample no longer available for re-verification and, on cross-check, contained fabricated
 table-color values. This is what STEP 3 in SKILL.md must apply exactly when generating the .docx.*
 
-Read `/mnt/skills/public/docx/SKILL.md` before generating. The rules below are deliberately
+Read this reference before generating. The rules below are deliberately
 specific — they were measured at the XML level, specifically to close the gap that caused past
 output to drift in font, color, table style, and numbering from page to page. Treat every value
 here as exact, not approximate.
@@ -402,7 +402,8 @@ mechanism for both that a generator following it exactly still wouldn't visually
 
 ### File output
 
-- File name: `[FeatureName]_URS_V[version].docx` saved to `/mnt/user-data/outputs/`
+- File name: `[FeatureName]_URS_V[version].docx` saved to the user-agreed output directory
+  (or `./outputs/` when none is specified)
 
 ### Table of Content / List of Figures / List of Tables must be genuine, live, updatable Word fields — read before touching any of this again
 
@@ -2117,7 +2118,7 @@ def check_hex_ids(docx_path):
     else:
         print("PASS: every w14:paraId / wp14:anchorId / wp14:editId attribute is valid 8-digit hex.")
 
-path = "/mnt/user-data/outputs/[FeatureName]_URS_V[version].docx"
+path = "./outputs/[FeatureName]_URS_V[version].docx"  # replace with the actual output path
 check_numbering(path)
 check_numbering_gap(path)
 check_heading_numbering(path)

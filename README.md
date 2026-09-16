@@ -78,7 +78,7 @@ running:
   that's what the project has configured instead.)
 - Python 3, plus:
   ```bash
-  pip install python-docx pywin32
+  pip install python-docx pywin32 PyMuPDF
   ```
 - A real, licensed Microsoft Word desktop install (Windows). `to_pdf_export.py`
   and `qc_audit.py`'s Word-open check drive real Word over COM automation —

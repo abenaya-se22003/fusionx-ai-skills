@@ -43,7 +43,8 @@ Before writing a single word, identify the module(s) from the scope and load the
 **This is mandatory — never skip.**
 
 ### Module Reference Files
-`view /mnt/skills/user/fusionx-urs/references/<filename>`
+Read `<skill-root>/references/<filename>`, where `<skill-root>` is the directory containing this
+`SKILL.md`. Do not assume a machine-specific installation path.
 
 | Module | Trigger Keywords | File |
 |---|---|---|
@@ -57,7 +58,7 @@ Before writing a single word, identify the module(s) from the scope and load the
 | Open Banking | Open Banking, PCA, BCA, SME Loan, AISP, PISP, TPP, OBIE, MMC, AER, DCR, FAPI | `open-banking.md` |
 
 **Also always load the URS format reference:**
-`view /mnt/skills/user/fusionx-urs/references/urs-format.md`
+Read `<skill-root>/references/urs-format.md`.
 This contains the exact section structure, table formats, numbering scheme, and writing rules,
 cross-checked at the raw XML level against four real LOLC files: Transaction Reversal – Interest
 Rollback URS V1.0 (most authoritative), the blank XX-Module and Master org templates, and the
@@ -411,29 +412,31 @@ actually met.
 
 ## STEP 3 — GENERATE .docx ON CONFIRMATION
 
-Once confirmed and Pass 1 of the validation gate is clean, read `/mnt/skills/public/docx/SKILL.md`
-then generate a formatted `.docx` file. Apply LOLC formatting (see DOCX FORMATTING section below)
+Once confirmed and Pass 1 of the validation gate is clean, run the bundled generator:
+`python <skill-root>/scripts/build_urs.py <draft-json> --output <output-docx>`.
+The input schema is documented in `<skill-root>/references/build-input.md` and an executable
+example is supplied at `<skill-root>/examples/urs-draft.example.json`. Apply LOLC formatting (see DOCX FORMATTING section below)
 **exactly** — don't improvise table styles, column widths, numbering mechanism, or font handling,
 since that's what causes documents to look inconsistent from one URS to the next.
-Save to: `/mnt/user-data/outputs/[FeatureName]_URS_V[version].docx`
+Save to the user-agreed output directory. If none is given, use `./outputs/[FeatureName]_URS_V[version].docx`
+relative to the current project; create `outputs/` if needed.
 
 **The generation pipeline for any document with a Table of Content is three phases, not two — the
 third is not optional. Use the scripts in this skill's `scripts/` folder as the starting point,
 don't rederive this logic from prose each time — that's what took many rounds to get right the
 first time:**
-1. `node main.js && python postprocess.py` — copy `scripts/postprocess_template.py` into the
-   project's `build/` folder as `postprocess.py` and fill in the one placeholder
-   (`OUTPUT_FILENAME_HERE`), or just pass the output path as `argv[1]`. Builds the file, including a
+1. `python <skill-root>/scripts/build_urs.py <draft-json> --output <output-docx>` followed by
+   `python <skill-root>/scripts/postprocess_template.py <output-docx>`. Builds the file, including a
    genuinely live ToC/LoF/LoT field with real bookmarks and entries, but only a placeholder page
    number in each entry — pagination can't be computed without an actual layout engine.
-2. If Word is available: run `scripts/get_page_numbers.ps1 <docx> <mapping-file>` (read-only —
+2. If Word is available: run `<skill-root>/scripts/get_page_numbers.ps1 <docx> <mapping-file>` (read-only —
    opens via COM, `Repaginate()` + `Fields.Update()`, reads each `PAGEREF` field's real computed
    page number, closes **without saving**; never add a `.Save()` call to this, see the Word-COM
    destructive-save warning in docx-formatting.md), then `python scripts/patch_page_numbers.py
    <docx> <mapping-file>` to substitute the real numbers into the file step 1 already produced. If
-   Word is not available, say so explicitly — the file will ship with placeholder page numbers until
-   this step can run.
-3. Run Pass 2 of the validation gate (STEP 2.5) before presenting the file.
+   Word is not available, stop before delivery: real page numbers are a required quality gate.
+3. Run `python <skill-root>/scripts/qc_audit.py <docx>` and Pass 2 of the validation gate (STEP 2.5)
+   before presenting the file.
 
 See docx-formatting.md's "Table of Content / List of Figures / List of Tables must be genuine,
 live, updatable Word fields" section for exactly why each of these phases is required and what goes
@@ -903,6 +906,28 @@ https://miro.com/app/board/uXjVPOGFdEE=/  [Miro flow diagrams — FusionX, if re
 Generate 6–12 testable scenarios as a bullet list, each in `[scenario] → [expected outcome]` form.
 At V0.1 draft this may be left as `[Test scenarios to be defined]` if the user prefers to defer it.
 
+### Test Data — required whenever scenarios are included
+
+The Data Dictionary's `Sample Data` column is an illustrative value, not an executable test-data
+set. When Section 11 contains scenarios, add a **Test Data Matrix** immediately after it (or attach
+it as a CSV/XLSX companion when it would make the URS unreadable). Give each dataset a stable ID
+(`TD-001`, `TD-002`, …), scenario IDs it supports, field/value pairs, setup/preconditions, and
+expected result/status. Cover happy path, boundary, invalid, unauthorized, duplicate/concurrency,
+and maker-checker cases that apply to the feature.
+
+You may create **synthetic production-like data** when actual values are unavailable: use realistic
+formats, valid check digits/lengths where applicable, internally consistent product/customer/account
+relationships, and values that exercise the stated business rules. Clearly label it `Synthetic`.
+You may also use **approved internal system data** supplied by the user or retrieved through an
+authorized internal connection; label it `Internal system data`, state its source screen/report and
+retrieval date, and minimise it to the fields needed for the scenario. Never include passwords,
+tokens, account credentials, national IDs, customer names/contact details, or unmasked production
+financial data. Substitute or mask those fields while preserving the rule-relevant format.
+
+Do not defer test data merely because the URS is V0.1 unless the user explicitly requests deferral.
+If a required reference/master-data value cannot be obtained or safely synthesised, record it as an
+Open Question with the owning team and the exact dataset/scenario it blocks.
+
 Before picking which scenarios to include, work through these 7 categories (adapted from
 `olbboy/BA-Kit`'s test-design system) against the actual fields and rules just drafted in Section
 7 — not generic placeholders. Not every category applies to every feature, but check all 7 before
@@ -930,7 +955,7 @@ Data Dictionary field + invalid input + unauthorized user + maker-checker violat
 
 ## FUSIONX MODULE REFERENCE TABLE
 
-All 8 modules have reference files in `/mnt/skills/user/fusionx-urs/references/`.
+All 8 modules have reference files in `<skill-root>/references/`.
 **Always load the relevant file(s) before writing.**
 
 | Module | Confluence Name | File | Jira Label |
@@ -986,8 +1011,7 @@ Authorization Module, Yard Management, Blacklist Management, Supplier Module
 
 ## DOCX FORMATTING
 
-Read `/mnt/skills/public/docx/SKILL.md` before generating, then read
-`references/docx-formatting.md` for the exact fonts, sizes, colors, table styles, and column
+Read `references/docx-formatting.md` for the exact fonts, sizes, colors, table styles, and column
 widths to apply. Apply it exactly — don't improvise, since improvisation is exactly what caused
 past output to drift in font, color, and table style from page to page. The reference file also
 explains *why* the drift happened (theme font vs. explicit per-run overrides) so the same mistake
