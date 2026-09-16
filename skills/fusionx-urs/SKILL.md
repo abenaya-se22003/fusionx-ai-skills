@@ -915,7 +915,20 @@ it as a CSV/XLSX companion when it would make the URS unreadable). Give each dat
 expected result/status. Cover happy path, boundary, invalid, unauthorized, duplicate/concurrency,
 and maker-checker cases that apply to the feature.
 
-You may create **synthetic production-like data** when actual values are unavailable: use realistic
+Before finalising the matrix, offer the user one concise, batched choice to supply exact test
+values when they matter to the feature: *"Do you want to provide any fixed test values (for example,
+an account number, product code, customer type, or existing record ID)? I can use those values and
+create synthetic or approved internal-system data for every remaining field."* Do not ask again
+when the user has already supplied values or has said to use synthetic data.
+
+Partial data is valid and expected. Treat each user-provided field as an immutable input for that
+dataset, record its provenance as `User-provided`, and generate or retrieve only the missing fields.
+Preserve all stated relationships and validations: if a supplied account number implies a branch,
+currency, customer type, or product, obtain those dependent values from an authorized source or
+create compatible synthetic values. If a supplied value is incompatible with the requested
+scenario, flag the conflict and ask for a replacement rather than silently changing it.
+
+You may create **synthetic production-like data** for fields the user has not supplied when actual values are unavailable: use realistic
 formats, valid check digits/lengths where applicable, internally consistent product/customer/account
 relationships, and values that exercise the stated business rules. Clearly label it `Synthetic`.
 You may also use **approved internal system data** supplied by the user or retrieved through an
