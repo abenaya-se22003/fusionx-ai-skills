@@ -13,6 +13,8 @@ the source beside each value (for example, `Account Number=12345 [User-provided]
 [Synthetic]`). For internal data, put source and retrieval date in setup/preconditions; mask
 sensitive values.
 
-Use `Synthetic` as the default row type when no test values are supplied. Use `User-provided` or
-`Mixed` only when the user asks to test a specific value, or when synthetic data cannot establish a
-required existing state or relationship for the scenario.
+The user selects a test-data mode during intake: `Synthetic`, `Specific user-provided data`, or
+`Approved internal-system data`. Use `Synthetic` rows for the first mode; use `User-provided` or
+`Mixed` for the second; use `Internal system data` for the third. If the selected synthetic mode
+cannot establish a required existing state or relationship, pause that scenario and ask the user
+for the minimum value(s) or a mode change.

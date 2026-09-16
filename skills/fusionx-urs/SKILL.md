@@ -91,8 +91,19 @@ Identify the following from the scope statement. If any are missing, ask **all a
 | Version | Default: 0.1 |
 | Release Date | Today's date in DD/MM/YYYY format |
 | Related Jira ticket (PF-XXXXX) | Default: [TO BE CONFIRMED] |
+| Test-data mode | Ask the user to choose one of the three modes below before drafting; if values were already supplied, record `Specific user-provided data` |
 
 Do **not** ask for what you can infer from the scope statement.
+
+Include the test-data choice in the same single intake message as other missing metadata:
+
+1. **Synthetic data** — create production-like synthetic values for all fields.
+2. **Specific user-provided data** — the user supplies one or more exact values; use compatible synthetic data for all remaining fields.
+3. **Approved internal-system data** — use authorised values from an internal source, with source and retrieval date recorded.
+
+Do not start a synthetic-data round until the user chooses a mode. This prevents a second wait when
+they intend to test a particular account, product, customer type, or existing record. If the user
+selects option 2, ask for every required value in one batch; partial values are allowed.
 
 ---
 
@@ -915,16 +926,11 @@ it as a CSV/XLSX companion when it would make the URS unreadable). Give each dat
 expected result/status. Cover happy path, boundary, invalid, unauthorized, duplicate/concurrency,
 and maker-checker cases that apply to the feature.
 
-**Default path:** when the user provides no test values, create `Synthetic` production-like data
-for every field and proceed without asking. This is the normal path.
-
-Ask the user one concise, batched question for fixed values only when (a) the user asks to test a
-specific record/value, or (b) synthetic data cannot let a scenario proceed — for example, the flow
-requires a pre-existing account, a currently configured product/rule, a historical transaction,
-or a system relationship that cannot safely be represented synthetically. Ask: *"Synthetic data
-cannot complete these scenarios: [IDs/reason]. Please provide the required value(s), such as an
-account number or product code, or confirm that I may retrieve approved internal-system data."*
-Do not ask again when the user has supplied values or confirmed synthetic data is sufficient.
+Use the test-data mode selected during intake. If **Synthetic data** was selected but a later
+scenario genuinely requires a pre-existing account, configured product/rule, historical
+transaction, or relationship that cannot safely be synthesised, stop that scenario and ask the
+user to provide the minimal required values or switch to approved internal-system data. Do not
+silently substitute a real record.
 
 Partial data is valid and expected. Treat each user-provided field as an immutable input for that
 dataset, record its provenance as `User-provided`, and generate or retrieve only the missing fields.
@@ -933,7 +939,7 @@ currency, customer type, or product, obtain those dependent values from an autho
 create compatible synthetic values. If a supplied value is incompatible with the requested
 scenario, flag the conflict and ask for a replacement rather than silently changing it.
 
-You may create **synthetic production-like data** by default, and for fields the user has not supplied in a mixed dataset: use realistic
+You may create **synthetic production-like data** for the Synthetic mode, and for fields the user has not supplied in a mixed dataset: use realistic
 formats, valid check digits/lengths where applicable, internally consistent product/customer/account
 relationships, and values that exercise the stated business rules. Clearly label it `Synthetic`.
 You may also use **approved internal system data** supplied by the user or retrieved through an
