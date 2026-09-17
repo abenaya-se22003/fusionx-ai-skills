@@ -6,24 +6,45 @@ new skill — it's the playbook, not just a changelog.
 
 ## What exists so far
 
-- `skills/user-manual-update/SKILL.md` + `gotchas.md` — full pipeline for
-  turning a Jira ticket into a delivered FusionX module user manual
-  (UAT walkthrough → docx build → export/QC → delivery), with two
-  validation gates and a repo-wide audit-trail convention baked in.
-- `agents/` — created, currently empty. A custom Agent definition
-  (`.claude/agents/<name>.md`) is a DIFFERENT thing from a skill — see
-  "Skill vs Agent" below before building one.
+Four skills, each with its own section further down this file:
+
+- `skills/user-manual-update/` — turns a Jira ticket into a delivered
+  FusionX module user manual (UAT walkthrough → docx build → export/QC →
+  delivery), with two validation gates (Gate A/B, each a fresh subagent
+  dispatch) and a repo-wide audit-trail convention baked in.
+- `skills/functional-testing/` — full QA-style functional/transaction-
+  lifecycle testing plus data-lineage tracing, via a 5-role subagent
+  pipeline (Executor, Traceability, Verifier, Source-Verifier,
+  Defect-Triage). See "`functional-testing` skill" below.
+- `skills/fusionx-urs/` — writes a FusionX User Requirement Specification
+  .docx from a scope statement, with a pre-draft BA Analyst subagent and
+  independent Gate A/B verifier subagents. See "URS skill follow-up" below.
+- `skills/api-field-mapper/` — maps fields in a FusionX Master Data/API
+  Requirements document to Swagger/OpenAPI operations or live-captured
+  traffic; single-thread, no subagent dispatch.
+- `shared/browser-session.md` — the canonical, workflow-scoped
+  `playwright-cli` session contract all four skills consume via
+  `scripts/sync-shared.py`; see "Browser-session architecture became
+  workflow-scoped, not global" below before touching anything
+  browser-related.
+- No `agents/` directory exists in this repo — every subagent above is an
+  ad-hoc `Agent` tool dispatch from within a skill (`general-purpose`,
+  foreground, blocking), not a persistent `.claude/agents/*.md` definition.
+  See "Skill vs Agent" below if you're considering adding one.
 - This repo (`fusionx-ai-skills`, remote
-  `https://github.com/r4ge-quit/fusionx-ai-skills`, branch `main`) is scoped
-  to `.claude/` ONLY — skills and agents, not the surrounding project's UAT
-  screenshots/manuals/scripts. It's a **separate git repo nested inside**
-  `D:\Work\LOLC\Automation Projects\User Manuals\.claude\` — the parent
-  project folder itself is intentionally not under git.
+  `https://github.com/r4ge-quit/fusionx-ai-skills`, branch `main`) lives at
+  `D:\Work\LOLC\API Work\fusionx-ai-skills` and is scoped to skills/shared
+  docs only — not any surrounding project's UAT screenshots, manuals, or
+  live working data. (An earlier, now-superseded lineage of this project
+  lived nested inside a project folder's own `.claude\`; if you find
+  references to that elsewhere, they predate this repo's current location
+  and remote.)
 - `.gitignore` here excludes `settings.local.json` (local permission
-  allowlist — machine-specific, not for sharing) and `scheduled_tasks.lock`.
-  Apply the same exclusions to any new skill's repo — check `.claude/` for
-  local/machine-specific files before committing, don't assume everything in
-  the folder is shareable.
+  allowlist — machine-specific, not for sharing), `scheduled_tasks.lock`,
+  `.playwright-cli/` and `.worktrees/` (tool-managed local state), and
+  Python bytecode (`__pycache__/`, `*.py[cod]`). Apply the same class of
+  exclusions to any new skill — check for local/machine-specific files
+  before committing, don't assume everything in the folder is shareable.
 
 ## Skill vs Agent — decide this FIRST
 
