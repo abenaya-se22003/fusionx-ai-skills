@@ -186,21 +186,31 @@ Functional Testing; do not rely on another installed skill.
 1. "Coverage Standard, Transaction Testing, and Evidence Capture" above —
    the Coverage Standard, Dropdowns and Selectable Controls, Search and
    Filtering, Transaction Testing, Evidence Capture, and the full-depth-first
-   ground rule. Session/login handling is covered separately by Prerequisites
-   above and the Subagent Dispatch Rules below; the AUDIT-LOG.md/FLOWS-LOG.md
-   convention is covered by Stage 0 and Stage 10 below — read this section
-   before starting, not after hitting a gap it would have covered.
-2. `references/browser-gotchas.md` — FusionX UI/environment quirks
+   ground rule. The AUDIT-LOG.md/FLOWS-LOG.md convention is covered by
+   Stage 0 and Stage 10 below — read this section before starting, not
+   after hitting a gap it would have covered.
+2. `references/browser-session.md`, in full — the canonical session/launch/
+   login contract for this and every other browser-driving skill in this
+   repo. Read the whole file, not just Section 0 (session naming): Section 2
+   is where the actual `open` command lives (`--headed` is mandatory — a
+   headless `open` reports success and returns real snapshots while no
+   window exists for the human to log into), and Section 5 is where you
+   verify an OS-level window actually rendered before ever asking the user
+   to log in or complete MFA. Prerequisites above and the Subagent Dispatch
+   Rules below only cite this file's Section 0 (naming) — they do not
+   restate Sections 2 or 5, so reading only what they cite is not a
+   substitute for reading this file directly.
+3. `references/browser-gotchas.md` — FusionX UI/environment quirks
    already learned (Ant Design virtualization specifics, sticky-header
    click interception, slow-confirm screens with no progress indicator,
    browser-driving mechanics).
-3. `gotchas.md` (this folder) — functional-testing-specific lessons.
-4. `docs/evidence-and-bug-policy.md` (from `fusionx-test-agent-v0.1.1`, if that
+4. `gotchas.md` (this folder) — functional-testing-specific lessons.
+5. `docs/evidence-and-bug-policy.md` (from `fusionx-test-agent-v0.1.1`, if that
    repo is checked out) — evidence-minimization rules: mask/omit credentials
    and auth data, store the minimum necessary. The Bug Report template's
    Evidence section and the Evidence Capture rules above already operationalize
    this; read the policy doc for the fuller rationale if available.
-5. The Templates section below. If the `fusionx-test-agent-v0.1.1` repo
+6. The Templates section below. If the `fusionx-test-agent-v0.1.1` repo
    happens to be checked out in the current project, its `templates/`
    directory has the canonical originals these were adapted from
    (`test-plan.md`, `bug-report.md`, `coverage-report.md`,
@@ -253,6 +263,14 @@ session: fx-func-<slug>-<tag>` line in `AUDIT-LOG.md` immediately, before
 opening it, so a concurrent engagement that reads the file a moment later
 never mints the same name. Also record it in this round's plan header
 alongside "Codebase connection" so a dispatched subagent can find it.
+Open it per `references/browser-session.md` Section 2 — `playwright-cli
+-s=<name> open --headed --browser chrome <url>`; `--headed` is not optional
+here, since the main thread is about to hand this session to a human for
+login. Immediately after, verify per Section 5 that a real OS-level window
+exists (on Windows: `Get-Process chrome | Where-Object { $_.MainWindowHandle
+-ne 0 }`, matching the page just navigated to) before telling the user to
+log in — do not take `open`'s text-output "opened" claim as sufficient by
+itself.
 Separately, compute this round's own `<round-id>` using the rule in Stage 5's
 Executor-dispatch bullet (check existing `TEST-EXECUTION-REPORT-*.md` files
 for the highest number used so far and increment it; `round-1` if none exist
