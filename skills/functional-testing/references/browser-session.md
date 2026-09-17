@@ -32,6 +32,8 @@ playwright-cli -s=<name> open --headed --browser chrome <url>
 ```
 
 - Launch Google Chrome explicitly with `--browser chrome`; do not rely on the CLI default browser.
+- `--browser chrome` should launch the machine's actual installed Google Chrome, not download a separate copy. If `open` ever starts downloading/installing a bundled Chromium even though Chrome is genuinely installed on the machine, do not let that install proceed — it's solving the wrong problem and wastes a multi-hundred-MB download. Stop, confirm Chrome is actually present (e.g. `where chrome` on Windows, or the standard install path), and treat a channel-detection failure like this as an environment problem to surface plainly, not something to silently work around by installing a redundant browser.
+- If Chrome is genuinely not installed on the machine at all (confirmed absent, not just a channel-detection hiccup), that's a real Prerequisites gap — surface it to the user rather than silently installing a substitute browser on their machine.
 - Keep the browser headed when the user needs to log in or complete MFA.
 - Do not configure automatic maximization, forced window sizing, or a custom viewport as part of the skill launch.
 - Leave browser window size, maximization, and resizing to the user.
