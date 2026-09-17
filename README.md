@@ -123,7 +123,9 @@ missing tool one skill needed and another didn't.
   Defect-Triage) per round, gated by an upfront round-type choice.
 - **[`fusionx-urs`](skills/fusionx-urs/)** — Writes a FusionX User
   Requirement Specification (URS) .docx from a scope statement: module
-  reference lookup across all 8 FusionX modules plus OBIE Open Banking specs,
+  reference lookup across all 8 FusionX modules (Lending, CASA, Customer
+  Onboarding/KYC, Cash & Teller, Term Deposit, MicroFinance, Common
+  Settings, and Open Banking/OBIE),
   an elicitation pass before drafting, a cognitive quality pass (ambiguity,
   assumption, edge-case, conflict, gap checks) on the drafted requirements,
   and a two-pass validation gate (content, then seventeen automated
