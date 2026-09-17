@@ -74,14 +74,13 @@ running:
   ```
   (macOS/Linux: install from [nodejs.org](https://nodejs.org) or your usual
   version manager instead.)
-- A live browser session with network-request capture:
+- `playwright-cli` — drives every skill's live browser session
+  (network-request capture, named-session reuse, evidence capture):
   ```bash
   npm install -g @playwright/cli
   ```
-  Confirm it's reachable with `playwright-cli list`. Whenever a skill uses
-  browser automation, it requires this CLI because its session reuse,
-  tracing, and evidence instructions use named-session and network-capture
-  behavior.
+  Confirm it's reachable with `playwright-cli list`. It's a real shell CLI,
+  not an MCP tool, so it won't show up in an MCP tool search.
 - Python 3, plus:
   ```bash
   pip install python-docx pywin32 PyMuPDF openpyxl requests
