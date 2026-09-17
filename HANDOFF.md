@@ -6,7 +6,7 @@ new skill — it's the playbook, not just a changelog.
 
 ## What exists so far
 
-Four skills, each with its own section further down this file:
+Five skills, each with its own section further down this file:
 
 - `skills/user-manual-update/` — turns a Jira ticket into a delivered
   FusionX module user manual (UAT walkthrough → docx build → export/QC →
@@ -22,10 +22,19 @@ Four skills, each with its own section further down this file:
 - `skills/api-field-mapper/` — maps fields in a FusionX Master Data/API
   Requirements document to Swagger/OpenAPI operations or live-captured
   traffic; single-thread, no subagent dispatch.
+- `skills/banking-pillar-release-update/` — refreshes one module's release
+  slides in the FusionX release deck's Banking Pillar section from live
+  Jira data (Canva by default, PowerPoint optional). Doesn't use
+  `playwright-cli` — drives Canva/Jira MCP connectors instead. Built for
+  Banking Pillar specifically; its own
+  `references/repurposing-for-other-pillars.md` spells out what a different
+  pillar's version would need to re-derive versus reuse as-is. See
+  "`banking-pillar-release-update` skill" below.
 - `shared/browser-session.md` — the canonical, workflow-scoped
-  `playwright-cli` session contract all four skills consume via
-  `scripts/sync-shared.py`; see "Browser-session architecture became
-  workflow-scoped, not global" below before touching anything
+  `playwright-cli` session contract the four browser-driven skills consume
+  via `scripts/sync-shared.py` (not `banking-pillar-release-update`, which
+  has no browser session to scope); see "Browser-session architecture
+  became workflow-scoped, not global" below before touching anything
   browser-related.
 - No `agents/` directory exists in this repo — every subagent above is an
   ad-hoc `Agent` tool dispatch from within a skill (`general-purpose`,
@@ -342,6 +351,38 @@ concurrently before now.
   step) and `api-field-mapper` (single-thread live-capture workflow, no
   subagents at all) needed the same named-session discipline at their own
   main-thread browser open, even without a subagent-inheritance angle.
+
+## `banking-pillar-release-update` skill
+
+Added from an already-built `SKILL.md` (not built fresh in this repo's usual
+`superpowers:writing-skills` process — it came in as a finished `.skill`
+package and was added as-is, so it hasn't been through this repo's own
+fresh-subagent validation rounds the other skills have).
+
+- Refreshes one module's release slides in the FusionX Version Release BA
+  Meeting deck's **Banking Pillar** section from live Jira data: story
+  point totals, Epic/Story counts, and one card per real ticket, via Canva
+  (default) or PowerPoint (optional alternate target).
+- No `playwright-cli`/browser session involved at all — drives `Canva` and
+  `Atlassian Rovo` (Jira) MCP connectors instead, plus `execute_office_js`
+  for the PowerPoint path. Doesn't participate in
+  `shared/browser-session.md`; don't add it to `scripts/sync-shared.py`'s
+  target list.
+- No subagent dispatch — single main-thread workflow, unlike the other four
+  skills' verification-gate pattern. If this skill later needs an
+  independent-verification gate (e.g. for the numbers pulled from Jira
+  before they're written to slides), that would be a genuinely new addition
+  worth designing deliberately, not assumed from the other skills' Gate
+  A/B pattern.
+- Built specifically for Banking Pillar's own deck template, Jira label
+  taxonomy (8 module labels plus a cross-cutting `IslamicBanking` label),
+  and card styling (`#14243B`/`#0E8074`/`#3E4A57`/`#F7F9FB`, Arial) — none
+  of that is generic. `references/repurposing-for-other-pillars.md` inside
+  the skill folder lists exactly what a different pillar's version needs
+  to re-derive versus what mechanics (page-ID-vs-index caution, JQL query
+  shape, grid-fitting discipline, verification rules) carry over unchanged.
+  The user explicitly does not want other pillars built now — this is
+  prep for whoever does that later, not a working multi-pillar skill.
 
 ## Where the deeper history lives
 

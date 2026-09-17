@@ -1,10 +1,12 @@
 # FusionX AI Skills
 
 Claude Code skills that support FusionX business-analysis work — user
-manuals, functional testing, requirement documentation, and more. Each
-skill orchestrates a human-in-the-loop workflow that drives Playwright
-against a live FusionX UAT session, with independent verification built in
-rather than self-certified results.
+manuals, functional testing, requirement documentation, release reporting,
+and more. Most skills orchestrate a human-in-the-loop workflow that drives
+Playwright against a live FusionX UAT session; the rest drive other live
+systems (Canva, Jira) the same way. Every skill with a subagent-checkable
+step builds independent verification in rather than relying on
+self-certified results.
 
 This repo is scoped to `.claude/` skills and agents only — not the
 surrounding project's UAT screenshots, manuals, or scripts.
@@ -29,7 +31,8 @@ npx skills add r4ge-quit/fusionx-ai-skills
 Skills are auto-invoked by description either way. Plugin install also
 namespaces them as `/fusionx-ai-skills:functional-testing`,
 `/fusionx-ai-skills:user-manual-update`, `/fusionx-ai-skills:fusionx-urs`,
-and `/fusionx-ai-skills:api-field-mapper`.
+`/fusionx-ai-skills:api-field-mapper`, and
+`/fusionx-ai-skills:banking-pillar-release-update`.
 
 ## Update
 
@@ -91,14 +94,21 @@ running:
   (see `user-manual-update/SKILL.md`'s Hard Rules). `fusionx-urs`'s own
   `get_page_numbers.ps1` and Pass-2 visual-verification step rely on the same
   Word-COM toolchain.
+- A configured **Canva MCP connector** and **Atlassian (Jira) MCP
+  connector** — needed only by `banking-pillar-release-update`, which
+  doesn't touch `playwright-cli` at all. If it's targeting a PowerPoint file
+  instead of Canva, it also needs an Office/PowerPoint automation tool
+  exposing `execute_office_js`.
 
-`playwright-cli` is used by all four skills (for `fusionx-urs`, only when a
-live UAT walkthrough is needed to ground a story — see its SKILL.md STEP 1.5;
-`api-field-mapper` uses it for its live-capture workflow). Every skill opens
-its own named session (`fx-func-…`, `fx-um-…`, `fx-urs-…`, `fx-api-…` — see
-`shared/browser-session.md`), so two skills — or two runs of the same skill —
-can drive the live app at the same time without one grabbing the other's
-browser.
+`playwright-cli` is used by the four UAT/browser-driven skills —
+`functional-testing`, `user-manual-update`, `fusionx-urs` (only when a live
+UAT walkthrough is needed to ground a story — see its SKILL.md STEP 1.5), and
+`api-field-mapper` (its live-capture workflow) — but not by
+`banking-pillar-release-update`, which drives Canva/Jira instead. Each of the
+four opens its own named session (`fx-func-…`, `fx-um-…`, `fx-urs-…`,
+`fx-api-…` — see `shared/browser-session.md`), so two skills — or two runs of
+the same skill — can drive the live app at the same time without one grabbing
+the other's browser.
 The Python/Word toolchain is exercised by `user-manual-update`'s and
 `fusionx-urs`'s build/export/QC scripts — but installing it alongside
 `playwright-cli` up front means no teammate stalls mid-run discovering a
@@ -179,6 +189,31 @@ shape.
 - Every task's captures and workbook live in their own numbered task folder
   nested under the module folder, so concurrent tasks (and concurrent
   skills) never collide on output.
+
+### [`banking-pillar-release-update`](skills/banking-pillar-release-update/)
+
+Refreshes one module's release slides in the FusionX Version Release BA
+Meeting deck's Banking Pillar section from live Jira data — story point
+totals, Epic/Story counts, and one correctly-sized enhancement card per
+real ticket.
+
+- Runs against a **Canva design by default**; a PowerPoint file is an
+  optional alternate target when the user explicitly asks for it.
+- Finds slides by content (module name, slide-role text), never by a
+  carried-over page index — every insert/delete shifts later indices, only
+  page IDs stay stable within one read.
+- Pulls three JQL queries per module (planned / delivered / upcoming) from
+  Jira, with an explicit exclusion rule for tickets that carry a
+  cross-cutting `IslamicBanking` label in addition to their module label.
+- Grows or shrinks continuation slides to match the actual ticket count
+  rather than ever shrinking cards to force a fit, and confirms with the
+  user before deleting any slot or slide.
+- Doesn't use `playwright-cli` — drives Canva/Jira (and optionally
+  PowerPoint) MCP connectors instead.
+- Built specifically for Banking Pillar's own deck, module labels, and card
+  styling — see its
+  [`references/repurposing-for-other-pillars.md`](skills/banking-pillar-release-update/references/repurposing-for-other-pillars.md)
+  before adapting it for a different pillar's deck.
 
 More skills are planned as other BA-support activities come up
 (requirement-gathering support, etc.).
