@@ -248,16 +248,79 @@ for each one is stated somewhere the skill's own Prerequisites points to
 directly — not left to a reader to infer from a script's import statement
 or a sibling skill's "by the way" note.
 
-## Next up: URS skill
+## URS skill follow-up
 
-The next skill to build is for URS (User Requirement Specification) — not
-yet scoped. Follow the Process section above: invoke
-`superpowers:brainstorming`/`superpowers:writing-skills` first, gather
-existing URS source material (templates, prior URS docs, any project
-convention already in use) before drafting, and run the self-containment
-audit above as a first-class step this time — not a follow-up pass
-discovered after the repo already went out to the team, as happened with
-`functional-testing` this session.
+The URS skill is now present under `skills/fusionx-urs/`. Its DOCX workflow
+uses a fresh pre-draft BA Analyst to independently identify ambiguity,
+stakeholder/dependency gaps, and questions, while elicitation and drafting
+remain interactive in the main thread. Gate A (pre-generation content) and
+Gate B (post-generation DOCX/QC) each require a separate fresh, foreground
+`general-purpose` subagent for independent verification.
+The main thread must fix failures and dispatch a new verifier rather than
+self-certifying or reusing the prior verifier. For change requests, those
+verifiers also trace changed screen/field/role/rule names through diagrams,
+mockups, captions, navigation, stories, dictionaries, impacts, scenarios,
+and linked artifacts, blocking delivery on stale references.
+
+## Browser-session architecture became workflow-scoped, not global (this session)
+
+`shared/browser-session.md` (packaged into all four skills via
+`scripts/sync-shared.py`) originally modeled "the browser session" as a
+single, machine-wide reusable thing: run `playwright-cli list`, reuse
+whatever authenticated session turns up. That was never actually safe beyond
+a single operator running one skill at a time — it just never got exercised
+concurrently before now.
+
+- **The failure mode**: two independent engagements (two functional-testing
+  rounds, or functional-testing and user-manual-update, or any pair of this
+  repo's four skills) running at the same time both see the same
+  `playwright-cli list` output, because the daemon behind `playwright-cli` is
+  visible machine-wide, not scoped to a project folder or process. "Reuse an
+  existing authenticated session" under that condition means either one can
+  silently start driving the other's browser — navigating it, filling forms
+  in it, or (worse) closing it.
+- **The fix uses a primitive `playwright-cli` already had**: sessions can be
+  named at creation time (`playwright-cli -s=<name> open ...`), and every
+  later command addresses a session by that exact name. The contract now
+  requires every workflow to compute a name — `<skill-prefix>-<task-slug>-
+  <random-tag>` — once, up front, from an identifier the skill already mints
+  for its own artifacts (round-id, ticket number, task-folder name), and to
+  use only that literal name for the rest of the workflow, including in every
+  subagent's dispatch prompt. No new registry file was needed; `playwright-cli
+  list`'s existing machine-wide visibility plus exact-name matching is
+  sufficient once nothing ever accepts "an authenticated session" as good
+  enough on its own.
+- **A real, previously undocumented `playwright-cli` gotcha surfaced while
+  verifying this**: re-running `open` against a session name that's already
+  open does not attach to or reuse that browser — it silently kills the old
+  process and starts a new one under the same name (confirmed directly: the
+  process id changed between two `open` calls against the same name, no
+  error, no warning). The contract now explicitly requires checking `list`
+  for the exact name before ever calling `open`, not just before creating a
+  session for the first time.
+- **`close-all`/`kill-all` are now explicitly banned from routine use.**
+  Neither has a scoping flag; both were confirmed to have no `--all`-style
+  opt-out, so on this repo's normal usage they'd tear down every concurrently
+  running engagement's browser, not just the caller's own. Previously the
+  contract didn't mention this risk at all, because a single-session
+  assumption made it invisible.
+- **Session identity is scoped to the engagement, not the round/task-step.**
+  The first draft of this fix tied the session name to `functional-testing`'s
+  round-id, which would have forced a fresh login every round even within one
+  sitting — regressing a real, hard-won lesson (login-fatigue avoidance
+  across rounds in the same working session). The corrected design scopes
+  the name to the whole engagement (recorded once in `AUDIT-LOG.md`, reused
+  by every round in that same conversation) and leaves round-id purely for
+  artifact filenames. Worth remembering for the next skill: "workflow" is not
+  automatically the same boundary as "one stage" or "one round" — get the
+  actual reuse lesson from the skill's own history before picking the
+  scoping unit.
+- Every skill's `SKILL.md`/`gotchas.md` was audited and updated to match —
+  not just `functional-testing` and `user-manual-update` (the two with
+  browser-touching subagents); `fusionx-urs` (single-thread live-grounding
+  step) and `api-field-mapper` (single-thread live-capture workflow, no
+  subagents at all) needed the same named-session discipline at their own
+  main-thread browser open, even without a subagent-inheritance angle.
 
 ## Where the deeper history lives
 

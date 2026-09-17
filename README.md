@@ -93,8 +93,13 @@ running:
   `get_page_numbers.ps1` and Pass-2 visual-verification step rely on the same
   Word-COM toolchain.
 
-`playwright-cli` is used by all three skills (for `fusionx-urs`, only when a
-live UAT walkthrough is needed to ground a story — see its SKILL.md STEP 1.5).
+`playwright-cli` is used by all four skills (for `fusionx-urs`, only when a
+live UAT walkthrough is needed to ground a story — see its SKILL.md STEP 1.5;
+`api-field-mapper` uses it for its live-capture workflow). Every skill opens
+its own named session (`fx-func-…`, `fx-um-…`, `fx-urs-…`, `fx-api-…` — see
+`shared/browser-session.md`), so two skills — or two runs of the same skill —
+can drive the live app at the same time without one grabbing the other's
+browser.
 The Python/Word toolchain is exercised by `user-manual-update`'s and
 `fusionx-urs`'s build/export/QC scripts — but installing it alongside
 `playwright-cli` up front means no teammate stalls mid-run discovering a

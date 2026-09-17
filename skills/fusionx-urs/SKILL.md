@@ -35,6 +35,13 @@ is as useless as one who never asks anything. STEP 1.5 below is where this happe
 drafting starts; the cognitive quality pass in STEP 2 is the second half of the same discipline,
 applied to what actually got drafted.
 
+**Validation prerequisite:** the `Agent` tool must be available for the
+pre-draft BA Analyst and the two independent verification dispatches described
+below. Confirm that it can run a foreground `general-purpose` subagent before
+drafting. If it is not
+available, tell the user before generation and do not present a final `.docx`
+as fully validated unless the user explicitly accepts that exception.
+
 ---
 
 ## STEP 0 — ALWAYS FIRST: Load Reference Files
@@ -104,6 +111,47 @@ Adapted from `requirements-interrogator` and `probe-question-generator`
 (`45ck/business-analysis-skills`). Do this every time, even for a scope statement that reads as
 complete — completeness is exactly what needs pressure-testing, not assumed.
 
+### Pre-draft BA Analyst dispatch (mandatory)
+
+Before the main thread asks the user elicitation questions, dispatch a fresh
+foreground `general-purpose` subagent to perform an independent intake review.
+Give it the raw scope/request, the relevant module reference files, and—when
+this is an update—the baseline URS and requested change. Do not give it the
+main thread's assumptions or proposed questions. It must return:
+
+- normalized actors, triggers, flow boundaries, data, outcomes, and affected
+  modules;
+- material ambiguities and decision questions, each tied to what it changes;
+- missing stakeholders, permissions, dependencies, integrations, failure
+  paths, and change-impact candidates;
+- whether a live UAT walkthrough is appropriate, based on the screen's
+  existence and stability.
+
+The subagent does not contact the user, invent answers, or draft URS content.
+The main thread reviews its report, combines it with the inline BA checks
+below, and asks the user one batched set of decisive questions. Any question
+that remains unanswered becomes an explicit Open Question or blocks drafting
+according to the existing elicitation rules.
+
+Example dispatch shape:
+```
+Agent({
+  subagent_type: "general-purpose",
+  run_in_background: false,
+  prompt: "Act as the independent pre-draft BA Analyst. Read the supplied
+  scope, module references, and baseline URS/change request if present.
+  Normalize actors, trigger, flow boundary, data, outcomes, dependencies,
+  stakeholder/permission gaps, failure paths, and likely change impacts.
+  Produce decisive questions tied to what each answer changes, and recommend
+  whether live UAT grounding is appropriate. Do not contact the user, invent
+  answers, or draft requirements. Do not trust prior assumptions."
+})
+```
+
+If this dispatch errors, times out, or returns an unusable report, dispatch a
+new BA Analyst before asking the user questions. Never reuse a verifier for
+this role or treat the main thread's own elicitation as its substitute.
+
 **1. Normalize the scope statement.** Silently (don't show this as a separate deliverable) sort
 what you were given into: the actor(s)/role(s) involved, the trigger, the main flow, what data is
 touched, what business rule(s) are implied, what's explicitly out of scope, and what's simply
@@ -126,7 +174,11 @@ this only helps when there's a real, finished screen to look at:
   UAT URL and do a live walkthrough to ground the User Flow, navigation paths, and Section 7 story
   details in what's actually there. For browser lifecycle, login/MFA, session reuse, viewport, and
   evidence handling, read and follow `references/browser-session.md`; it is the self-contained,
-  mandatory Playwright contract for this skill. Check for browser automation access before assuming
+  mandatory Playwright contract for this skill. Per its Section 0, open this session under this
+  story's own name, `fx-urs-<ticket-or-story-id>-<tag>` — never a bare `playwright-cli` call, and
+  never a session found by running `list` and picking whatever looks authenticated, since that
+  session may belong to a different, concurrently-running URS story or a different skill entirely.
+  Check for browser automation access before assuming
   it's unavailable — `playwright-cli` is a shell CLI, not an MCP tool, so confirm it with
   `playwright-cli --version` rather than concluding "no Playwright access" from tool-search
   results alone. Once
@@ -321,6 +373,76 @@ validation gate. It is not. Read `references/docx-formatting.md`'s numbering sec
 writing or regenerating any numbering-bearing content, and run Pass 2 for real (actual script
 output, not a claimed `[PASS]`) before presenting the result, regardless of how small the requested
 change sounds.
+
+## Independent validation dispatch (mandatory for every URS)
+
+The main thread owns intake, elicitation, drafting, user confirmation, and
+fixes. The two validation passes below must be independently verified by fresh
+subagents; do not self-certify them from a checklist you wrote yourself.
+
+- Dispatch each verifier with `subagent_type: "general-purpose"` and
+  `run_in_background: false`. The dispatch is blocking and its result gates
+  the next step.
+- Use a new subagent for the pre-draft BA Analyst, a different new subagent
+  for Gate A, and a third new subagent for Gate B. If a
+  verifier fails, times out, or returns an unusable result, dispatch a fresh
+  retry; never reuse the instance that already saw the draft or file.
+- Give each verifier the exact artifact paths and source material it needs,
+  but do not give it the main thread's claimed checklist or conclusions. It
+  must independently re-read the draft or generated `.docx`, run the required
+  scripts, and report `PASS`, `FAIL`, or `EXCEPTION: reason` for each item.
+- A substantive `FAIL` blocks progress. Fix the underlying draft/build issue
+  and dispatch a new verifier to re-check from scratch. The main thread may
+  summarize the verdict, but may not turn an unresolved failure into a pass.
+
+Gate A's fresh verifier independently checks the chat-confirmed draft against
+the full CONTENT CHECKLIST before generation. Gate B's fresh verifier
+independently opens the generated DOCX, reruns `qc_audit.py` and the required
+structural checks, and performs the visual review required below when Word is
+available. If either verifier needs a missing business decision, it returns an
+open question to the main thread instead of inferring user intent.
+
+### Change-impact audit (required when this is an update or change request)
+
+The verifier must not check only the newly edited sentence or section. First
+derive the changed items (for example, an old and new screen name, field,
+role, status, rule, or flow step) from the request and the baseline document.
+Then search and visually inspect every place the item can affect, including:
+
+- flow diagrams, UI mockups, screenshots, figure labels, captions, and
+  navigation paths;
+- Section 5 Scope, Section 7 stories (all six rows), Preconditions, Triggers,
+  Expected outputs, and cross-story references;
+- Data Dictionary Feature/Field/Source entries, E2E Impact rows, Test
+  Scenarios, Open Questions, Assumptions, Risks, Annexure, and any module
+  reference or linked artifact named in the URS.
+
+For embedded diagrams or mockups, a text search is insufficient: inspect the
+rendered image and its caption/alt text for stale labels. Report an impact
+matrix with `changed item`, `reference location`, `required update`, and
+`evidence/status`. A stale or missing update is a `FAIL`, even when the edited
+section itself is correct. The main thread must apply the correction across
+all affected areas and dispatch a new verifier; the verifier does not silently
+patch its own finding or mark an unresolved reference as an exception.
+
+Example dispatch shape (adapt paths and scope):
+```
+Agent({
+  subagent_type: "general-purpose",
+  run_in_background: false,
+  prompt: "Act as the independent URS verifier. Read the supplied scope,
+  references, draft or DOCX, and fusionx-urs/SKILL.md. Re-derive the relevant
+  checklist, inspect the actual artifact, run required scripts, and report
+  every item as PASS, FAIL, or EXCEPTION with evidence. Do not trust prior
+  checklists or conclusions and do not edit the artifact."
+})
+```
+
+For Pass 1, post the fresh Gate A verifier's itemized verdict as the content
+checklist result; the main thread may fix the draft and explain changes but
+must not replace the independent verdict with its own unverified pass. For
+Pass 2, post the fresh Gate B verifier's itemized verdict together with the
+actual script output and visual-review result.
 
 Generating the .docx is not the next action after content confirmation. Two separate, blocking
 checklist passes sit between "content confirmed" and "file handed to user," and neither is a soft
@@ -1002,6 +1124,10 @@ isn't repeated when generating new documents.
 
 - [ ] `references/urs-format.md` loaded — section order and table formats match LOLC samples
 - [ ] Module reference file(s) loaded — navigation paths and screen names exact
+- [ ] For an update/change request, an independent change-impact matrix covers every affected
+      occurrence across diagrams/mockups, captions, navigation, Scope, all story rows, Data
+      Dictionary, E2E Impact, Test Scenarios, Open Questions, Assumptions, Risks, Annexure, and
+      linked/module-reference artifacts; no stale old screen/field/role/rule name remains
 - [ ] STEP 1.5 elicitation actually run before drafting, not skipped: high-risk gaps (role/permission rules, failure-path behavior, changed-vs-new-behavior, thresholds/conditions) were either asked about and answered, or explicitly deferred to Open Questions with the user's sign-off — not silently assumed; and whether the screen exists live/stable was actually resolved (walked through if yes, or navigation paths explicitly marked `[not yet verified against a live screen]` if no) — not left implicit
 - [ ] Cognitive quality pass (STEP 2, all 8 checks) actually run as a self-critique, not a silent tally: no forbidden-word ambiguity (adequate/appropriate/easy/efficient/fast/flexible/intuitive/optimal/quick/reasonable/robust/seamless/simple/sufficient/timely/user-friendly/TBD/etc.) left unresolved in Action/Trigger/General Guide Line without a defined threshold or stated backing; every rule's implied dependency is either stated or listed in Assumptions; Test Scenarios cover all 7 categories from Section 11 (or explicitly mark inapplicable ones), not just happy-path-plus-one-error; no unflagged contradiction between Assumptions/Risks/Scope/Action; no orphaned Data Dictionary field an Action rule never references; no unfounded absolute/certainty language in Assumptions or Risks; the same role/actor/field/status name used identically across every story, the Data Dictionary, and E2E Impact; every in-scope item traces to a story, every story traces to a Data Dictionary field group, every field traces to a Test Scenario or is explicitly non-testable
 - [ ] STEP 1 intake fields actually landed in the document: Drafted By/Reviewed By in 1.1 Document
@@ -1058,6 +1184,10 @@ isn't repeated when generating new documents.
 - [ ] No section left entirely blank — use `[TO BE CONFIRMED]` or `[To be attached]` if needed
 
 ## FORMATTING CHECKLIST (STEP 2.5 Pass 2 — run against the generated .docx, before presenting)
+
+- [ ] **Change-impact rendering check:** for update/change requests, inspect the rendered DOCX pages
+      and every embedded flow diagram/mockup/screenshot to confirm changed screen, field, role, and
+      rule names match the corrected text everywhere; any stale visible label or caption is a FAIL.
 
 - [ ] **Font check (script-verified, not eyeballed):** run `check_fonts()` from `references/docx-formatting.md` against the generated file. Two passes: (1) every heading, table header, and body run must explicitly carry Candara (or Arial for `→` glyphs), none left to inherit from theme defaults (this is the #1 cause of inconsistent-looking output; see "Why past output drifted"); (2) every list level actually used via `numPr` must have its own explicit Candara in `numbering.xml`'s `<w:lvl><w:rPr><w:rFonts>` — the rendered number glyph is synthesized from this, not from any run in `document.xml`, so pass (1) alone can hit 100% while every number still renders in theme Calibri (confirmed as a real gap — even the reference file has it at several levels). This is exactly the checklist item that was previously eyeball-only and let a font mismatch through — a `PASS` requires the script's output, not a read-through.
 - [ ] **Number-to-text gap (manual — no script can check this; compare siblings, not one item):** the space between a rendered number and its following text (e.g. `7.1.` then a gap then `Story 01`, not `7.1.Story 01`) is a rendering/layout property, not something inspectable from the XML tree. **Default recipe (matches all three real sources exactly, verified at the raw XML level): `suffix: LevelSuffix.TAB` plus the list level's own `indent: { left, hanging }` — no literal space/tab character in the text run.** This produces the wide, hanging-indent-aligned gap real samples have, and correct wrap-alignment for continuation lines. Compare at least two sibling numbered/bulleted items at the same level side by side to confirm the gap is present and consistent, not just check one. **Only if this specific generation pipeline includes a Word-COM-automation Save round-trip that's confirmed to strip paragraph-level `w:tabs`/`w:ind`** (a narrower, secondary failure mode — see `docx-formatting.md`), fall back to `suffix: LevelSuffix.NOTHING` + a literal two-space `TextRun`; treat that as a defensive exception for a known-broken pipeline, not the default, since it produces a visibly narrower gap than the real samples. Applies to headings, story row labels, story content points, and bullets alike.

@@ -236,6 +236,19 @@ original approved design stays legible alongside what actually shipped.
    confirmed by multiple reviewers) as the practical completion bar
    instead. See `HANDOFF.md` for the reasoning and the full round-by-round
    account.
+7. **The browser session became workflow-scoped, not global.** The original
+   design (and the original `shared/browser-session.md`) assumed a single
+   "the already-authenticated session," reused by `playwright-cli list` and
+   picked up by whichever role needed it next. That broke under concurrency:
+   two functional-testing engagements — or this skill and a sibling skill —
+   running at the same time would both see the same `list` output and could
+   adopt each other's browser. Every engagement now opens a `playwright-cli`
+   session named `fx-func-<slug>-<tag>`, computed once at Stage 0 and
+   recorded in `AUDIT-LOG.md`; every dispatched role is handed that exact
+   name in its prompt rather than discovering a session itself. See
+   `shared/browser-session.md` (Section 0 in particular) for the full
+   contract, which now applies identically to all four skills in this repo,
+   not just this one.
 
 ## Explicitly out of scope for this spec
 

@@ -85,12 +85,17 @@ unrelated (observed during pilot #1) — jarring and disruptive even though
 no credentials were ever at risk.
 
 Before dispatching a role that depends on the live session, re-run
-`playwright-cli list` immediately beforehand — don't trust a check from
-several tool calls ago. If a dispatched role reports it can't reach the
-session, the main thread should independently re-verify with its own
-`list` call before concluding it needs to re-authenticate (the daemon can
-die between the role's check and yours). See `references/browser-gotchas.md`
-for orphaned-window and `--persistent` handling.
+`playwright-cli list` immediately beforehand and confirm this engagement's
+exact recorded session name (`fx-func-<slug>-<tag>`, from `AUDIT-LOG.md`) is
+still in the output — don't trust a check from several tool calls ago, and
+don't treat a *different* named session appearing in that same `list` output
+as usable just because it looks authenticated; it belongs to someone else's
+engagement. If a dispatched role reports it can't reach the session, the main
+thread should independently re-verify with its own `list` call, checking for
+that same exact name, before concluding it needs to re-authenticate (the
+daemon can die between the role's check and yours). See
+`references/browser-gotchas.md` for orphaned-window and `--persistent`
+handling.
 
 ## Network capture stays action-correlated
 

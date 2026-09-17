@@ -23,9 +23,20 @@ read this alongside `SKILL.md`.
   user a UAT task is blocked for lack of browser tooling, check
   `which playwright-cli` / `playwright-cli list` in addition to any MCP tool
   search — these are separate capability surfaces.
-- `playwright-cli list` / `tab-list` often shows a browser session already
-  open and authenticated to UAT from a prior task — check before opening a
-  fresh one.
+- `playwright-cli list` shows every session on the machine, not just this
+  engagement's — it's common to see a session already open and authenticated
+  to UAT from a prior task, but a session belonging to a *different* module
+  update (or the same module, driven from a separate, possibly concurrent
+  conversation) can look identical at a glance. Only reuse the exact
+  `fx-um-<module-slug>-<tag>` name recorded in this engagement's
+  `AUDIT-LOG.md` entry (see SKILL.md Workflow step 2); never adopt a
+  differently-named session just because it's open and logged in.
+- Re-running `playwright-cli -s=<name> open <url>` against a name that's
+  already open does not attach to or reuse that browser — it silently starts
+  a brand-new browser process under the same name and orphans the old one
+  (confirmed directly: the process id changes on the second `open` call, with
+  no error). Check `list` for the name first; only call `open` when it's
+  genuinely absent.
 - `playwright-cli open` launches headless by default — the browser never
   actually becomes visible unless `open` is called with `--headed`. Needed
   for any stage where the human has to see or interact with the browser

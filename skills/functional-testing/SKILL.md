@@ -136,17 +136,20 @@ Functional Testing; do not rely on another installed skill.
 
 ## Prerequisites
 
-- A live, human-authenticated `playwright-cli` browser session. This is a
-  hard blocker, not optional tooling — Stage 0 cannot proceed without it.
-  `playwright-cli` is a real CLI, not an MCP server, and is not installed by
-  `npx skills add` or the native plugin install: install it globally before
-  Stage 0 with `npm install -g @playwright/cli`, then confirm it is reachable
-  with `playwright-cli list`. Executor,
-  Traceability, Verifier, and Defect-Triage all operate on this same session
-  per the Subagent Dispatch Rules — none of them logs in itself, and none of
-  them uses a browser-tool "attach" command to connect to it (see the
-  Subagent Dispatch Rules for why that specific command is dangerous with
-  `playwright-cli`).
+- A live, human-authenticated `playwright-cli` browser session, opened under
+  this engagement's own named session (`fx-func-<slug>-<tag>` — see
+  `references/browser-session.md` Section 0 and Stage 0 below). This is a hard blocker, not
+  optional tooling — Stage 0 cannot proceed without it. `playwright-cli` is a
+  real CLI, not an MCP server, and is not installed by `npx skills add` or the
+  native plugin install: install it globally before Stage 0 with
+  `npm install -g @playwright/cli`, then confirm it is reachable with
+  `playwright-cli list`. Executor,
+  Traceability, Verifier, and Defect-Triage all operate on this same named
+  session per the Subagent Dispatch Rules — none of them logs in itself, none
+  of them discovers the session by listing and picking an entry (they're
+  handed the exact name), and none of them uses a browser-tool "attach"
+  command to connect to it (see the Subagent Dispatch Rules for why that
+  specific command is dangerous with `playwright-cli`).
 - That tool must be able to capture raw network requests/responses
   correlated to the action that triggered them — this is not optional
   instrumentation, it's what Executor's evidence, Traceability, and
@@ -235,6 +238,26 @@ round's report too, never silently. The Test Plan template's header has a
 "Codebase connection" field for exactly this (same value shape as the Run
 Summary template's field of the same name) — that's where this gets
 recorded; it is not a separate file or a new artifact.
+
+Also establish this **engagement's** browser session name now, before
+Discovery (stage 3) needs one. Per `references/browser-session.md` Section 0
+this is per-workflow, not per-round: check the `AUDIT-LOG.md` you just read
+for a previously recorded `Browser session: fx-func-<slug>-<tag>` line for
+this target project. If one exists and `playwright-cli list` confirms it's
+still open, reuse it — this is what lets round 2 of the same engagement skip
+re-login, exactly like before, without guessing at a session that might
+belong to someone else's concurrent round against the same project. If none
+exists yet, mint one now (`<slug>` a short label for the target project,
+`<tag>` a random/timestamp suffix generated once) and record a `Browser
+session: fx-func-<slug>-<tag>` line in `AUDIT-LOG.md` immediately, before
+opening it, so a concurrent engagement that reads the file a moment later
+never mints the same name. Also record it in this round's plan header
+alongside "Codebase connection" so a dispatched subagent can find it.
+Separately, compute this round's own `<round-id>` using the rule in Stage 5's
+Executor-dispatch bullet (check existing `TEST-EXECUTION-REPORT-*.md` files
+for the highest number used so far and increment it; `round-1` if none exist
+yet) — `<round-id>` names this round's artifacts; it does not name the
+browser session.
 
 ### 1. Intake
 
@@ -504,9 +527,11 @@ Dispatch one fresh `Agent` tool call, `subagent_type: "general-purpose"`,
 `run_in_background: false`. The prompt must include, verbatim:
 
 - The full confirmed test plan (every row).
-- That it operates the **same already-authenticated browser session** —
-  it must not attempt its own login or assume a fresh unauthenticated
-  session.
+- The exact `playwright-cli -s=<name>` session name recorded in this round's
+  plan header (`fx-func-<slug>-<tag>`, established at Stage 0) — it must use
+  only that named session for every browser command, never a bare
+  `playwright-cli` call, never its own login, and never a session it finds by
+  running `playwright-cli list` and picking an entry.
 - The Transaction Testing rules from the Coverage Standard section above:
   full lifecycle testing (create/edit/submit/approve/reject/delete) with
   disposable UAT data where authorized — this is not a read-only pass.
@@ -526,12 +551,10 @@ Dispatch one fresh `Agent` tool call, `subagent_type: "general-purpose"`,
   possible with the available tool, write `NETWORK-CAPTURE-<round-id>.md`
   with one heading per action stating plainly 'network capture unavailable
   this round — evidence is UI-observable only' instead of raw pairs; don't
-  fabricate entries or silently omit the file." `<round-id>` is a short
-  sequential label unique within the target project (e.g. `round-1`,
-  `round-2`) — check existing `TEST-EXECUTION-REPORT-*.md` files at the
-  project root for the highest number used so far and increment it; use
-  `round-1` if none exist yet. Use the same `<round-id>` for every artifact
-  this round produces (network-capture log, test-execution report).
+  fabricate entries or silently omit the file." `<round-id>` is the same one
+  computed at Stage 0 (also used in this round's session name) — use it for
+  every artifact this round produces (network-capture log, test-execution
+  report).
 - This explicit instruction: "If you reach a destructive/irreversible
   action with no disposable UAT record available, or a genuinely ambiguous
   step the plan doesn't resolve, stop and report back rather than deciding
@@ -1199,18 +1222,22 @@ screen and Verification method still describe the source, not the defect.
 - Always foreground/blocking (`run_in_background: false`) — this pipeline
   is sequential; each stage's output gates the next, so nothing here should
   run unattended.
-- Executor, Traceability, Verifier, and Defect-Triage all operate the same
-  already-authenticated browser session established during Discovery
-  (stage 3) — none of them attempts its own login or assumes a fresh
-  unauthenticated session, and none of them opens a new browser instance.
-  Use plain `playwright-cli -s=<session>
-  <command>` calls (`list`, `snapshot`, `tab-list`, etc.) to find and use
-  the existing session — never the `attach` command, which is for
-  connecting to a browser that's running *externally* to `playwright-cli`
-  entirely (`--cdp=`, `--extension`), not for reconnecting to a session
-  `playwright-cli` itself already manages via `open`. Calling `attach` on
-  a session opened via `open` reliably kills it — see
-  `references/browser-gotchas.md` for the bundled session-reuse rule;
+- Executor, Traceability, Verifier, and Defect-Triage all operate this
+  engagement's own named browser session, established at Stage 0
+  (`fx-func-<slug>-<tag>` — `references/browser-session.md` Section 0). The
+  dispatch prompt states that exact name literally; none of them attempts its
+  own login, assumes a fresh unauthenticated session, opens a new browser
+  instance, or discovers a session for itself by running `playwright-cli
+  list` and picking whatever entry looks authenticated — `list` shows every
+  session on the machine, including ones belonging to a different, possibly
+  concurrently-running engagement, and only the exact name it was handed is
+  safe to use. Use plain `playwright-cli -s=<name>
+  <command>` calls (`snapshot`, `tab-list`, etc.) against that name — never
+  the `attach` command, which is for connecting to a browser that's running
+  *externally* to `playwright-cli` entirely (`--cdp=`, `--extension`), not for
+  reconnecting to a session `playwright-cli` itself already manages via
+  `open`. Calling `attach` on a session opened via `open` reliably kills it —
+  see `references/browser-gotchas.md` for the bundled session-reuse rule;
   `gotchas.md` (this skill's own file) summarizes its observed impact. This
   is the single most
   disruptive mistake a dispatch prompt for this skill can make, and it
@@ -1232,20 +1259,28 @@ screen and Verification method still describe the source, not the defect.
   escalation the first time it needs the second identity — it is not
   expected to authenticate as a second user unassisted any more than
   Executor was.
-- This holds across rounds within one working session too: if a second,
-  unrelated round (different module, different topic) starts later in the
-  same session, its Discovery (stage 3) navigates to the new module in the
-  same already-authenticated browser session rather than relaunching or
-  re-logging in — the session belongs to the human's login for the whole
-  working session, not to any one round. A UI-level preference that's part
-  of that session's mutable state — a language switcher is the clearest
-  example — is not guaranteed to still be set the way an earlier stage left
-  it by the time a later stage's dispatch runs. Any row whose Scenario or
-  Preconditions names a specific language (per Stage 3's per-language branch
-  rule) must have the dispatched role explicitly (re)select that language
-  itself before acting, rather than trusting whatever the shared session
-  currently happens to have set — silently inheriting the wrong language
-  produces a false Pass or false Fail that looks like a normal result.
+- This holds across rounds within one engagement too: if a second round
+  (different module, different topic) starts later in the same engagement —
+  same target project, same conversation continuing forward — its Discovery
+  (stage 3) finds the same `Browser session: fx-func-<slug>-<tag>` line this
+  engagement recorded in `AUDIT-LOG.md` at Stage 0 and reuses that exact named
+  session rather than relaunching or re-logging in. The session belongs to
+  this one engagement for as long as it keeps running, not to any one round
+  within it — but it is still one specific named session, never "whatever
+  `playwright-cli list` shows as open." A genuinely separate engagement
+  against the same project (a different conversation, dispatched
+  independently, possibly running at the same time) computes its own
+  `<slug>-<tag>` at its own Stage 0 and gets its own session — it must never
+  adopt this engagement's name, and this engagement must never adopt its. A
+  UI-level preference that's part of the session's mutable state — a language
+  switcher is the clearest example — is not guaranteed to still be set the
+  way an earlier stage left it by the time a later stage's dispatch runs. Any
+  row whose Scenario or Preconditions names a specific language (per Stage
+  3's per-language branch rule) must have the dispatched role explicitly
+  (re)select that language itself before acting, rather than trusting
+  whatever the shared session currently happens to have set — silently
+  inheriting the wrong language produces a false Pass or false Fail that
+  looks like a normal result.
 - This assumes a continuous working session; it does not extend across a
   genuine multi-day gap forced by a scheduled/external event a row's
   precondition depends on (see stages 5 and 7). When a stage resumes hours

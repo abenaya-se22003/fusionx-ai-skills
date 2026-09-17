@@ -29,15 +29,23 @@ overrides, `browser-session.md`.
   recovers using a fresh suitable record.
 - Before replacing a dead session, inspect visible browser windows as well as
   `playwright-cli list`/`tab-list`: an orphaned Chrome window may remain after
-  its daemon has died. Never create a second browser just to diagnose it.
+  its daemon has died. Never create a second browser just to diagnose it, and
+  never re-run `open` under the same name to "refresh" it — that silently
+  starts a new browser process under the same name and orphans the old one
+  (see `shared/browser-session.md` Section 2).
 - `--persistent` may reduce login fatigue across an authorized multi-dispatch
   task, but it does not prove the UAT session remains authenticated.
 
 ## Evidence and role dispatch
 
 - Use absolute screenshot and snapshot paths and confirm the produced path.
-- Every dispatched browser role uses `playwright-cli -s=<session> <command>`;
-  it never opens, closes, attaches to, or re-authenticates a browser. If the
-  shared session is unavailable, report BLOCKED to the main thread.
+- Every dispatched browser role uses `playwright-cli -s=<name> <command>`,
+  where `<name>` is the exact engagement session name it was handed in its
+  dispatch prompt; it never opens, closes, attaches to, or re-authenticates a
+  browser, and never discovers a session itself by running `playwright-cli
+  list` and picking an entry — `list` shows every session on the machine,
+  not just this engagement's. If the named session is unavailable, report
+  BLOCKED to the main thread.
 - Immediately before dispatching a browser role, the main thread re-runs
-  `playwright-cli list`.
+  `playwright-cli list` and confirms the exact engagement session name is
+  still present.

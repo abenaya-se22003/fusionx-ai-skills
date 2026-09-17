@@ -37,12 +37,13 @@ immediately** — never a breadth-only/title-only pass that only checks entry
 points, tile titles, or default/landing states. Never conclude a screen has
 "no target content" from its name or menu label. Open it.
 
-**Session and access:** drive the browser with `playwright-cli` only (see
-`gotchas.md` for how to find/reuse a session and work around click/rendering
-quirks). Keep the browser visible for login/MFA; wait for the user to confirm
-login before touching authenticated screens. Don't enter excluded
-systems/modules until explicitly authorized. Don't expose credentials,
-tokens, or personal data in notes or screenshots.
+**Session and access:** drive the browser with `playwright-cli -s=<name>`
+under this engagement's own named session, established per Workflow step 2
+above (see `gotchas.md` for how to reuse/recover it and work around
+click/rendering quirks). Keep the browser visible for login/MFA; wait for the
+user to confirm login before touching authenticated screens. Don't enter
+excluded systems/modules until explicitly authorized. Don't expose
+credentials, tokens, or personal data in notes or screenshots.
 
 **Cover every in-scope item:** dashboard/landing entry points; every
 sidebar/top-nav process, parent menu, and nested menu item; every screen,
@@ -140,7 +141,18 @@ unaffected branches instead of stopping the whole walkthrough.
    suffix, mismatched version numbers in filenames), do not assume the
    newest-timestamped one is correct — confirm the authoritative file with
    the user before building on it.
-2. **Walk UAT.** Drive the browser with `playwright-cli` only — never a
+2. **Walk UAT.** Before opening a browser, establish this engagement's own
+   named `playwright-cli` session per `references/browser-session.md`
+   Section 0: check `AUDIT-LOG.md` (repo root) for a previously recorded
+   `Browser session: fx-um-<module-slug>-<tag>` line for this module's
+   update; reuse it (after confirming via `playwright-cli list` that it's
+   still open) if found. If not, mint one now (`<module-slug>` a short label
+   for the module, e.g. `term-deposit`; `<tag>` a random/timestamp suffix)
+   and record the line in `AUDIT-LOG.md` immediately, before opening the
+   session — this is what keeps a concurrent update to a *different* module
+   (or the same module from a separate conversation) from ever landing on
+   this one's browser. Drive the browser with `playwright-cli -s=<name>`
+   only — never a bare `playwright-cli` call, and never a
    project-specific test framework/agent that might also exist in the repo.
    Follow the full "Coverage Standard — UAT Walkthrough" below.
    Capture screenshots continuously, not at the end. Keep defect/blocker
@@ -188,18 +200,25 @@ walkthrough already being "done" and no reason to rubber-stamp your prose.
 Brief the subagent as a self-contained task (it has no memory of this
 conversation) with: the ticket's Done/not-done table and which rows are in
 scope, every screen/control you walked plus the screenshots folder path, and
-that a `playwright-cli` session is already authenticated and reusable
-(`playwright-cli list`/`tab-list`). Its job is to build its OWN table by
-actually re-driving a meaningful sample of the flagged items live and
-cross-checking every screenshot file exists and shows what it's claimed to
-show — not to grade a table you hand it as already-true.
+the exact `playwright-cli -s=<name>` session name this engagement is using
+(from `AUDIT-LOG.md`'s `Browser session:` line) — state the literal name, do
+not tell it to discover one itself. `playwright-cli list` shows every session
+on the machine, not just this engagement's; a subagent told to "find" an
+authenticated session has no way to tell this engagement's session apart from
+a different, possibly concurrently-running update's. Its job is to build its
+OWN table by actually re-driving a meaningful sample of the flagged items
+live and cross-checking every screenshot file exists and shows what it's
+claimed to show — not to grade a table you hand it as already-true.
 
 Example dispatch prompt (adapt names/paths):
 ```
 Independently verify UAT coverage for the Batch Reversal screen (Term
-Deposit module, ticket PF-99999). Screens/controls to check: [list]. A
-playwright-cli session is already logged into UAT (playwright-cli
-list/tab-list to find it). Screenshots claimed so far are in
+Deposit module, ticket PF-99999). Screens/controls to check: [list]. Use the
+playwright-cli session named fx-um-term-deposit-7k2q for every browser
+command (playwright-cli -s=fx-um-term-deposit-7k2q <command>) — it is
+already logged into UAT; do not open a new session, do not use a different
+session name even if `playwright-cli list` shows one that looks
+authenticated. Screenshots claimed so far are in
 <Term-Deposit-Module-Manual-Update/screenshots>. Re-open the screen live,
 re-test every dropdown option and every row action listed, and cross-check
 each cited screenshot against what it's supposed to show. Do not assume a

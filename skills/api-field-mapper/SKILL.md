@@ -93,9 +93,11 @@ project directory:
 - Tool-managed state like `.playwright-cli/` stays at the project root —
   don't try to relocate it; the CLI writes there itself relative to the
   working directory and splitting it per task isn't supported or worth the
-  effort. (The full-coverage driving instructions used to be a separate
-  project-root file the user had to keep supplying — they're now bundled at
-  `<skill_dir>/references/browser-gotchas.md`, see 8.2,
+  effort. Concurrent tasks are kept apart by *naming* their `playwright-cli`
+  sessions differently (see 8.1), not by giving each task its own
+  `.playwright-cli/` workspace. (The full-coverage driving instructions used
+  to be a separate project-root file the user had to keep supplying — they're
+  now bundled at `<skill_dir>/references/browser-gotchas.md`, see 8.2,
   so there's nothing project-specific to place for that anymore.)
 - If the project directory already has task output sitting loose at the
   root from before this convention existed, offer to reorganize it into
@@ -323,11 +325,16 @@ the user for the FusionX dashboard URL and tenant. Store them in the entry
 only if the user authorizes retaining those environment-specific values;
 otherwise use them for the current task only.
 
-First run `playwright-cli list` and reuse an existing authenticated session
-when available. If no usable session exists, open a headed Chrome session at
-that URL:
+Per `references/browser-session.md` Section 0, this task's session is named
+`fx-api-<task-folder-slug>-<tag>` (`<task-folder-slug>` from the `<NN>_<Short_
+Task_Name>` you just established under "Output folder convention"; `<tag>` a
+random/timestamp suffix generated once). Run `playwright-cli list` and check
+for that exact name — a differently-named session in that list belongs to a
+different task or a different skill's workflow, possibly running right now;
+never adopt it just because it looks authenticated. If found, reuse it. If
+not, open it:
 ```
-playwright-cli open --headed --browser chrome "<live_app.dashboard_url>"
+playwright-cli -s=<name> open --headed --browser chrome "<live_app.dashboard_url>"
 ```
 - `--headed` is mandatory — the user must be able to see and interact with
   the window (e.g. to complete login/MFA). Never use a headless session for
@@ -335,7 +342,9 @@ playwright-cli open --headed --browser chrome "<live_app.dashboard_url>"
 - If login is required, bring the visible window to the foreground, have the
   user complete it, and wait for confirmation before authenticated actions.
 - Use the shared contract for session reuse, lifecycle ownership, and
-  recovery. In particular, do not use `playwright-cli attach`.
+  recovery. In particular, do not use `playwright-cli attach`, and don't
+  re-run `open` against a name that's already open — it silently replaces
+  the running browser under the same name instead of reusing it.
 
 ### 8.2 Drive the app and capture traffic
 
@@ -343,14 +352,16 @@ Follow `<skill_dir>/references/browser-gotchas.md`
 (bundled with the skill — no need to ask the user for it) for how
 thoroughly to click through screens, fill forms, and handle Ant Design's
 virtualized dropdowns. Key
-commands for this skill's purposes:
+commands for this skill's purposes (`<name>` is this task's session name from
+8.1 — every call below carries it; a bare `playwright-cli <command>` targets
+the anonymous `default` session, not this task's):
 ```
-playwright-cli snapshot                         # current page a11y tree, with element refs
-playwright-cli click <ref>                      # interact using refs from the last snapshot
-playwright-cli fill <ref> <text>
-playwright-cli requests                         # numbered list of network calls since last navigation
-playwright-cli request-body <n>                 # a specific request's outgoing JSON body
-playwright-cli response-body <n>                 # a specific request's raw response JSON
+playwright-cli -s=<name> snapshot                         # current page a11y tree, with element refs
+playwright-cli -s=<name> click <ref>                      # interact using refs from the last snapshot
+playwright-cli -s=<name> fill <ref> <text>
+playwright-cli -s=<name> requests                         # numbered list of network calls since last navigation
+playwright-cli -s=<name> request-body <n>                 # a specific request's outgoing JSON body
+playwright-cli -s=<name> response-body <n>                # a specific request's raw response JSON
 ```
 When saving screenshots, snapshots, or captured response files, use absolute
 paths inside the current task folder. Keep raw responses separate from the
