@@ -128,7 +128,16 @@ missing tool one skill needed and another didn't.
   assumption, edge-case, conflict, gap checks) on the drafted requirements,
   and a two-pass validation gate (content, then seventeen automated
   XML-structural checks against the generated .docx) before the file is
-  presented.
+  presented. Three points are backed by a fresh, independent subagent
+  dispatch rather than the main thread grading its own work: a pre-draft BA
+  Analyst that reviews scope for ambiguity/gaps before elicitation even
+  starts, and separate Gate A (pre-generation content) and Gate B
+  (post-generation docx/QC) verifiers. On an update or change request, the
+  verifiers also run a change-impact audit — tracing every renamed
+  screen/field/role/rule through diagrams, mockups, captions, navigation,
+  stories, dictionaries, and linked artifacts — and block delivery on any
+  stale reference. A failed check gets a fresh subagent for the retry, never
+  the one that just passed something.
 
 - **[`api-field-mapper`](skills/api-field-mapper/)** maps fields in a FusionX
   Master Data/API Requirements document to Swagger/OpenAPI operations or
