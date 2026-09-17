@@ -65,6 +65,7 @@ playwright-cli -s=<name> <command>
 ## 5. Login and MFA
 
 - Keep the browser headed for login and MFA.
+- **Before asking the user to complete login/MFA, verify a real window actually rendered — don't trust `open`'s text output alone.** `playwright-cli` reports a session as open, and snapshots/screenshots will succeed, purely via the DevTools protocol; none of that proves an OS-level window exists for the user to see and click into. On Windows, check for one directly: `Get-Process chrome -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 }`, and confirm the matching window's title corresponds to the page just navigated to — not just any Chrome window already open on the machine (the user's own separate browsing). If no matching window is found, do not ask the user to log in or to "confirm whether they can see the window" — that outsources a check the automation can do itself. Treat it as a launch problem and follow Recovery below instead.
 - The user completes credentials and MFA; automation waits for explicit confirmation before authenticated actions.
 - Only the thread that first creates the workflow's session authenticates it. Every later consumer of that session — later stages, subagents — reuses that authentication; none of them logs in again.
 - Never record or expose credentials, tokens, cookies, or other sensitive authentication data.
