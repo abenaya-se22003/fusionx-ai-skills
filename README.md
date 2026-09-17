@@ -107,62 +107,79 @@ missing tool one skill needed and another didn't.
 
 ## Skills
 
-- **[`user-manual-update`](skills/user-manual-update/)** — Turns a Jira
-  ticket or request into a delivered FusionX module user manual (Accounts,
-  Cash, Collateral, Lending, SCO, Term Deposit, or a new module): live UAT
-  walkthrough, docx build, export/QC, delivery. Two points are backed by a
-  fresh, independent subagent dispatch rather than the main thread grading
-  its own work: Gate A (pre-draft coverage validation, before a word of
-  manual content is written) and Gate B (post-build content/formatting
-  validation, against the actual delivered docx/PDF). Each re-derives its
-  own evidence — re-driving the live UAT screen, re-running the QC script,
-  re-reading the actual document — rather than grading a table the main
-  thread already filled in; any CONFIRMED finding blocks progress and gets a
-  fresh subagent for the retry, never the one that just passed something.
-  Also maintains a repo-wide `AUDIT-LOG.md`/`FLOWS-LOG.md` audit trail
-  spanning every module and session, not just per-ticket detail.
-- **[`functional-testing`](skills/functional-testing/)** — Full QA-style
-  functional testing of a FusionX module end to end: transaction-lifecycle
-  testing (create/edit/submit/approve/reject/delete, not read-only),
-  data-lineage tracing (where a validated value or dropdown option actually
-  comes from), and optional source-code cross-verification. Runs a 5-role
-  subagent pipeline per round — Executor, Traceability, Verifier,
-  Source-Verifier (codebase cross-check, read-only, degrades explicitly when
-  no codebase connection is configured), and Defect-Triage — gated by an
-  upfront round-type choice (functional only / full traceability / targeted
-  traceability). Verifier's independent re-check supersedes Traceability's
-  claim when they disagree, and a `DEFECT-LOG.md` entry can be tagged
-  `[retest: ...]` and updated in place once a fix is confirmed, rather than
-  duplicated.
-- **[`fusionx-urs`](skills/fusionx-urs/)** — Writes a FusionX User
-  Requirement Specification (URS) .docx from a scope statement: module
-  reference lookup across all 8 FusionX modules (Lending, CASA, Customer
-  Onboarding/KYC, Cash & Teller, Term Deposit, MicroFinance, Common
-  Settings, and Open Banking/OBIE), an elicitation pass before drafting, a
-  cognitive quality pass (ambiguity, assumption, edge-case, conflict, gap
-  checks) on the drafted requirements,
-  and a two-pass validation gate (content, then seventeen automated
-  XML-structural checks against the generated .docx) before the file is
-  presented. Three points are backed by a fresh, independent subagent
-  dispatch rather than the main thread grading its own work: a pre-draft BA
-  Analyst that reviews scope for ambiguity/gaps before elicitation even
-  starts, and separate Gate A (pre-generation content) and Gate B
-  (post-generation docx/QC) verifiers. On an update or change request, the
-  verifiers also run a change-impact audit — tracing every renamed
-  screen/field/role/rule through diagrams, mockups, captions, navigation,
-  stories, dictionaries, and linked artifacts — and block delivery on any
-  stale reference. A failed check gets a fresh subagent for the retry, never
-  the one that just passed something.
-- **[`api-field-mapper`](skills/api-field-mapper/)** — Maps fields in a
-  FusionX Master Data/API Requirements document to Swagger/OpenAPI
-  operations, or to live-captured dropdown and create/save network traffic
-  when Swagger alone can't prove the real request/response shape, then
-  renders an auditable Excel workbook with confidence levels
+### [`user-manual-update`](skills/user-manual-update/)
+
+Turns a Jira ticket or request into a delivered FusionX module user manual
+(Accounts, Cash, Collateral, Lending, SCO, Term Deposit, or a new module).
+
+- **Pipeline:** live UAT walkthrough → docx build → export/QC → delivery.
+- **Gate A** (pre-draft coverage validation, before a word of manual content
+  is written) and **Gate B** (post-build content/formatting validation,
+  against the actual delivered docx/PDF) are each a fresh, independent
+  subagent dispatch — not the main thread grading its own work.
+- Each gate re-derives its own evidence (re-drives the live UAT screen,
+  re-runs the QC script, re-reads the actual document) rather than grading a
+  table the main thread already filled in.
+- Any CONFIRMED finding blocks progress; the retry goes to a **new**
+  subagent, never the one that just passed something.
+- Maintains a repo-wide `AUDIT-LOG.md`/`FLOWS-LOG.md` audit trail spanning
+  every module and session, not just per-ticket detail.
+
+### [`functional-testing`](skills/functional-testing/)
+
+Full QA-style functional testing of a FusionX module end to end:
+transaction-lifecycle testing (create/edit/submit/approve/reject/delete, not
+read-only), data-lineage tracing, and optional source-code cross-verification.
+
+- **5-role subagent pipeline per round:** Executor → Traceability → Verifier
+  → Source-Verifier → Defect-Triage.
+- Source-Verifier cross-checks confirmed behavior against the actual codebase
+  (read-only); it degrades explicitly, never silently, when no codebase
+  connection is configured.
+- Gated by an upfront round-type choice: functional only / full traceability
+  / targeted traceability.
+- Verifier's independent re-check supersedes Traceability's claim when they
+  disagree.
+- A `DEFECT-LOG.md` entry can be tagged `[retest: ...]` and updated in place
+  once a fix is confirmed, rather than duplicated.
+
+### [`fusionx-urs`](skills/fusionx-urs/)
+
+Writes a FusionX User Requirement Specification (URS) .docx from a scope
+statement.
+
+- **Module reference lookup** across all 8 FusionX modules: Lending, CASA,
+  Customer Onboarding/KYC, Cash & Teller, Term Deposit, MicroFinance, Common
+  Settings, and Open Banking/OBIE.
+- An elicitation pass before drafting, then a cognitive quality pass
+  (ambiguity, assumption, edge-case, conflict, gap checks) on the drafted
+  requirements.
+- **Three independent subagent checkpoints**, none self-graded by the main
+  thread: a pre-draft BA Analyst (ambiguity/gaps, before elicitation even
+  starts), Gate A (pre-generation content), and Gate B (post-generation
+  docx/QC — seventeen automated XML-structural checks plus a hand-verify
+  pass).
+- On an update or change request, the verifiers also run a change-impact
+  audit — tracing every renamed screen/field/role/rule through diagrams,
+  mockups, captions, navigation, stories, dictionaries, and linked artifacts
+  — and block delivery on any stale reference.
+- A failed check gets a fresh subagent for the retry, never the one that
+  just passed something.
+
+### [`api-field-mapper`](skills/api-field-mapper/)
+
+Maps fields in a FusionX Master Data/API Requirements document to
+Swagger/OpenAPI operations, or to live-captured dropdown and create/save
+network traffic when Swagger alone can't prove the real request/response
+shape.
+
+- Renders an auditable Excel workbook with confidence levels
   (High/Medium/Low/Not Found/Blocked) and the raw lookup responses behind
-  each row. Single main-thread workflow, no subagent dispatch — every task's
-  captures and workbook live in their own numbered task folder nested under
-  the module folder, so concurrent tasks (and concurrent skills) never
-  collide on output.
+  each row.
+- Single main-thread workflow — no subagent dispatch.
+- Every task's captures and workbook live in their own numbered task folder
+  nested under the module folder, so concurrent tasks (and concurrent
+  skills) never collide on output.
 
 More skills are planned as other BA-support activities come up
 (requirement-gathering support, etc.).
