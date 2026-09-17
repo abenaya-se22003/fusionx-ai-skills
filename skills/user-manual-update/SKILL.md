@@ -23,7 +23,13 @@ works in any project it's dropped into, not just the one it was authored in.
 2. "Manual Production Rules" below — what the manual document itself must
    contain: structure, hard content rules, numbering safety, screenshot rules,
    pre-delivery validation checklist.
-3. `gotchas.md` (this skill folder) — operational/environment lessons learned
+3. `references/browser-session.md`, in full — the mandatory session/launch/
+   login contract shared by every browser-driving skill in this repo.
+   Section 2 has the actual `open` command (`--headed` required) and
+   Section 5 has the pre-login window-verification check; Workflow step 2
+   only cites Section 0 (session naming) inline, so reading just that
+   citation is not a substitute for reading the whole file.
+4. `gotchas.md` (this skill folder) — operational/environment lessons learned
    across prior module updates that aren't written into the sections above.
 
 Do not skip ahead to writing UAT steps or manual content without reading the
@@ -141,20 +147,29 @@ unaffected branches instead of stopping the whole walkthrough.
    suffix, mismatched version numbers in filenames), do not assume the
    newest-timestamped one is correct — confirm the authoritative file with
    the user before building on it.
-2. **Walk UAT.** Before opening a browser, establish this engagement's own
-   named `playwright-cli` session per `references/browser-session.md`
-   Section 0: check `AUDIT-LOG.md` (repo root) for a previously recorded
-   `Browser session: fx-um-<module-slug>-<tag>` line for this module's
-   update; reuse it (after confirming via `playwright-cli list` that it's
-   still open) if found. If not, mint one now (`<module-slug>` a short label
-   for the module, e.g. `term-deposit`; `<tag>` a random/timestamp suffix)
-   and record the line in `AUDIT-LOG.md` immediately, before opening the
-   session — this is what keeps a concurrent update to a *different* module
-   (or the same module from a separate conversation) from ever landing on
-   this one's browser. Drive the browser with `playwright-cli -s=<name>`
-   only — never a bare `playwright-cli` call, and never a
-   project-specific test framework/agent that might also exist in the repo.
-   Follow the full "Coverage Standard — UAT Walkthrough" below.
+2. **Walk UAT.** Before opening a browser, read `references/browser-session.md`
+   in full — not just Section 0 (session naming). Establish this engagement's
+   own named `playwright-cli` session per Section 0: check `AUDIT-LOG.md`
+   (repo root) for a previously recorded `Browser session:
+   fx-um-<module-slug>-<tag>` line for this module's update; reuse it (after
+   confirming via `playwright-cli list` that it's still open) if found. If
+   not, mint one now (`<module-slug>` a short label for the module, e.g.
+   `term-deposit`; `<tag>` a random/timestamp suffix) and record the line in
+   `AUDIT-LOG.md` immediately, before opening the session — this is what
+   keeps a concurrent update to a *different* module (or the same module from
+   a separate conversation) from ever landing on this one's browser. Open it
+   per Section 2 — `playwright-cli -s=<name> open --headed --browser chrome
+   <url>`; `--headed` is not optional, since `open` reports success (pid,
+   page title, snapshot) even when run headless, with no window for the user
+   to see (see `gotchas.md`'s "headless by default" entry). Immediately after,
+   verify per Section 5 that a real OS-level window actually rendered — on
+   Windows, `Get-Process chrome | Where-Object { $_.MainWindowHandle -ne 0 }`,
+   matching the page just navigated to — before telling the user to log in;
+   do not treat `open`'s text output alone as proof a window exists. Drive
+   the browser with `playwright-cli -s=<name>` only — never a bare
+   `playwright-cli` call, and never a project-specific test framework/agent
+   that might also exist in the repo. Follow the full "Coverage Standard —
+   UAT Walkthrough" below.
    Capture screenshots continuously, not at the end. Keep defect/blocker
    evidence in a separate log from the start.
 3. **GATE A — Pre-Draft Coverage Validation.** Mandatory checkpoint, run

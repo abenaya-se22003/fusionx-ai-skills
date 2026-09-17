@@ -37,3 +37,36 @@ Fixed in `SKILL.md`:
 `references/browser-session.md` required no changes — the contract was
 already correct; it was simply unreachable from the workflow that was
 supposed to follow it.
+
+## 2026-09-17 — swept other playwright-driving skills for the same gap
+
+Checked every skill in this repo that references `playwright-cli` or
+`browser-session.md` for the same orphaning pattern found above
+(`functional-testing`, `user-manual-update`, `fusionx-urs`,
+`api-field-mapper`; `banking-pillar-release-update` confirmed not to use
+Playwright at all).
+
+- `user-manual-update` had the identical gap: Workflow step 2 ("Walk UAT")
+  cited `references/browser-session.md` Section 0 only, and Read First, In
+  Order never listed the file — only this skill's own `gotchas.md`, which
+  does correctly document "`open` launches headless by default" but is not
+  itself the point where the launch command gets written. Fixed the same
+  way: added `browser-session.md` (full file) to Read First, and inlined
+  the `--headed --browser chrome` launch command plus the Section 5
+  window-verification check directly into step 2.
+- `fusionx-urs` was already correct: its live-walkthrough step says
+  "read and follow `references/browser-session.md`; it is the
+  self-contained, mandatory Playwright contract for this skill" with no
+  section-scoping caveat — no orphaning, no fix needed.
+- `api-field-mapper` was already correct: "Before any browser interaction,
+  read and follow `references/browser-session.md`; it is this repository's
+  mandatory session contract and takes precedence over this skill's
+  browser-specific guidance" — full-file instruction stated before any
+  citation narrows to a specific section, plus `--headed` is separately
+  inlined at its own launch command. No fix needed.
+
+Pattern going forward: any citation of `browser-session.md` that names a
+specific section (e.g. "Section 0") without also either (a) telling the
+reader to read the whole file first, or (b) inlining the Section 2 launch
+command and Section 5 verification check at the point of use, reproduces
+this gap. Check new citations against this before adding them.
